@@ -31,29 +31,35 @@ export function fetchGetUserList(params?: Api.SystemManage.UserSearchParams) {
 }
 
 /** get menu list */
-export const fetchGetMenuList = () =>
-  request<Api.SystemManage.Menu[]>({
+export async function fetchGetMenuList(
+  _params: Api.Common.CommonSearchParams
+): Promise<NaiveUI.FlatResponseData<Api.SystemManage.MenuList>> {
+  const response = await request<Api.SystemManage.Menu[]>({
     url: '/route',
     method: 'get'
-  })
-    .then(response => {
-      const menus = response.data || [];
-      return {
-        data: {
-          records: menus,
-          total: menus.length,
-          current: 1,
-          size: menus.length
-        },
-        error: null
-      };
-    })
-    .catch(error => {
-      return {
-        data: null,
-        error: error.message
-      };
-    });
+  });
+
+  if (response.error) {
+    return {
+      data: null,
+      error: response.error,
+      response: response.response
+    };
+  }
+
+  const menus = response.data || [];
+
+  return {
+    data: {
+      records: menus,
+      total: menus.length,
+      current: 1,
+      size: menus.length
+    },
+    error: null,
+    response: response.response
+  };
+}
 
 /** get all pages */
 export function fetchGetAllPages() {
