@@ -105,6 +105,9 @@ importers:
       '@unocss/preset-uno':
         specifier: 66.0.0
         version: 66.0.0
+      '@unocss/preset-wind3':
+        specifier: 66.0.0
+        version: 66.0.0
       '@unocss/transformer-directives':
         specifier: 66.0.0
         version: 66.0.0
