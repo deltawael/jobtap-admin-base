@@ -115,9 +115,16 @@ soybean-admin-nestjs/
 使用 Docker Compose 一键启动所有服务（包含 PostgreSQL、Redis 等依赖）：
 
 ```bash
-docker-compose -p soybean-admin-nest up -d
+docker-compose up -d
 ```
 
+如果只需要启动中间件（PostgreSQL、Redis），可使用单独的 Compose 文件：
+
+```bash
+docker-compose -f docker-compose.middleware.yml up -d
+```
+
+这种方式适合本地单独调试前端或后端服务；启动中间件后，再按下方“手动安装与配置”步骤启动业务服务即可。
 启动后即可访问：
 
 - 前端页面：`http://localhost:9527`
