@@ -27,8 +27,9 @@ When a new customer arrives, this should be the first file to update.
 
 Fixed replacement points:
 
-- `frontend/src/assets/svg-icon/logo.svg`
+- `frontend/public/logo.png`
 - `frontend/public/favicon.svg`
+- `frontend/public/favicon.ico`
 
 The application UI should keep using shared logo entry points instead of referencing customer assets directly in pages.
 
@@ -63,8 +64,9 @@ Keep `VITE_APP_TITLE` and `VITE_APP_DESC` aligned with the frontend brand config
 
 Replace only these files unless a customer needs a deeper visual redesign:
 
-- `frontend/src/assets/svg-icon/logo.svg`
+- `frontend/public/logo.png`
 - `frontend/public/favicon.svg`
+- `frontend/public/favicon.ico`
 
 ### 3. Review customer-facing frontend areas
 
@@ -87,7 +89,16 @@ These locations are already wired for brand replacement:
 
 - Swagger runtime display via `backend/libs/bootstrap/src/swagger/init-doc.swagger.ts`
 - seed brand user via `backend/prisma/seeds/sys/sysUser.ts`
-- SQL seed fallback via `deploy/postgres/02_sys_user.sql`
+
+### 5. Database initialization rule
+
+Runtime database initialization is now unified to Prisma:
+
+- schema changes come from `backend/prisma/migrations`
+- initial data comes from `backend/prisma/seeds`
+- `deploy/postgres` SQL files are retained only as historical reference and are not auto-mounted by Docker Compose
+
+If a local PostgreSQL volume was previously initialized by the legacy SQL path, clear the old volume before running `prisma migrate deploy`, otherwise Prisma will report `P3005`.
 
 ## Validation Checklist
 
@@ -105,23 +116,11 @@ After each customer customization, verify the following:
 
 ## Still Intentionally Retained
 
-The following areas are intentionally left unchanged in the current branding scope because they are internal engineering identifiers or upstream tool references:
+The following areas are intentionally left unchanged because they are upstream package identities or legacy reference material rather than runtime business branding:
 
-- `package.json` package names
-- Dockerfile work directories
-- `docker-compose*.yml` service names, database names, and volume names
-- cache key prefixes
-- JWT default secret text
 - upstream dependency names such as `@soybeanjs/*`
-- README and template/tooling references unless a full repo rebrand is requested
-
-Examples of retained internal markers include:
-
-- `backend/libs/constants/src/cache.constant.ts`
-- `backend/libs/config/src/security.config.ts`
-- `backend/ecosystem.config.js`
-- `docker-compose.yml`
-- `docker-compose.middleware.yml`
+- legacy SQL snapshots under `deploy/postgres`
+- third-party avatar/demo asset URLs unless a customer requests replacement
 
 ## Recommendation for Future Customers
 
@@ -129,7 +128,7 @@ Use the following order every time:
 
 1. Edit `frontend/src/config/brand.ts`
 2. Edit `backend/libs/config/src/brand.config.ts`
-3. Replace `logo.svg` and `favicon.svg`
+3. Replace `logo.png`, `favicon.svg`, and `favicon.ico`
 4. Run `pnpm -C frontend typecheck`
 5. Manually verify the login page, layout header/sider, footer, loading screen, and Swagger page
 

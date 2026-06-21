@@ -8,8 +8,8 @@ MIGRATION_DIR = prisma/migrations/$(shell cat $(TIMESTAMP_FILE))_migration
 MIGRATION_PATH = $(MIGRATION_DIR)/migration.sql
 
 init_migration:
-	npx prisma migrate deploy --schema $(SCHEMA_PATH)
-	npx prisma db seed
+	pnpm exec prisma migrate deploy --schema $(SCHEMA_PATH)
+	pnpm exec prisma db seed
 
 # 默认任务：生成迁移文件
 all: generate_migration
@@ -27,22 +27,22 @@ check_timestamp:
 # 3. 使用 prisma migrate diff 生成迁移脚本，从空数据库到当前 schema
 generate_migration: check_timestamp
 	mkdir -p $(MIGRATION_DIR)
-	npx prisma migrate diff --from-empty --to-schema-datamodel $(SCHEMA_PATH) --script > $(MIGRATION_PATH)
+	pnpm exec prisma migrate diff --from-empty --to-schema-datamodel $(SCHEMA_PATH) --script > $(MIGRATION_PATH)
 
 # 标记迁移已应用
 # 用于手动标记某个迁移已经被应用到数据库
 resolve_migration: check_timestamp
-	npx prisma migrate resolve --applied $(shell cat $(TIMESTAMP_FILE))_migration
+	pnpm exec prisma migrate resolve --applied $(shell cat $(TIMESTAMP_FILE))_migration
 
 # 部署迁移
 # 将所有未应用的迁移应用到数据库
 deploy_migration:
-	npx prisma migrate deploy --schema $(SCHEMA_PATH)
+	pnpm exec prisma migrate deploy --schema $(SCHEMA_PATH)
 
 # 重置数据库
 # 删除所有数据并重新应用所有迁移
 reset_database:
-	npx prisma migrate reset --schema $(SCHEMA_PATH) --force
+	pnpm exec prisma migrate reset --schema $(SCHEMA_PATH) --force
 
 # 删除临时时间戳文件
 rm_temp_file:

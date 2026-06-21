@@ -1,18 +1,17 @@
 services:
-  # 添加数据库初始化服务
+  # 数据库初始化统一由 Prisma migration + seed 负责
   db-init:
     build:
       context: backend/
     environment:
-      # 同 backend 的环境变量
       DATABASE_URL: "postgresql://jobtap:jobtap@123.@postgres:5432/jobtap-admin-base-backend?schema=public"
     depends_on:
       postgres:
         condition: service_healthy
     command: >
       sh -c "
-        pnpm prisma migrate deploy &&
-        pnpm prisma db seed
+        pnpm exec prisma migrate deploy --schema prisma/schema.prisma &&
+        pnpm exec prisma db seed
       "
     networks:
       - jobtap-admin-base
@@ -56,6 +55,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     ports:
       - "9528:9528"
     networks:
@@ -80,7 +81,6 @@ services:
       - "25432:5432"
     volumes:
       - jobtap-admin-base-postgres_data:/usr/share/docker/postgresql
-      - ./deploy/postgres:/docker-entrypoint-initdb.d
     networks:
       - jobtap-admin-base
     healthcheck:

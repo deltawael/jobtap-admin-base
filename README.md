@@ -20,10 +20,12 @@ JobTap Admin Base 是一个基于 Vue 3 + Vite + NestJS 的中后台基础项目
 
 - `frontend`：前端管理后台
 - `backend`：NestJS 后端服务
-- `deploy`：数据库初始化与部署辅助资源
+- `deploy`：历史 SQL 快照与部署辅助资源
 - `docs`：项目文档与客户定制说明
 
 当前默认品牌为 `JobTap`。界面品牌、运行时品牌和客户交付相关的替换入口已经集中收敛，便于后续快速做客户化换标。
+
+当前数据库初始化流程已经统一为 `Prisma migration + Prisma seed`。`deploy/postgres` 下的 SQL 文件仅作为历史参考保留，不再通过 Docker 自动执行。
 
 ## 项目结构
 
@@ -45,6 +47,13 @@ jobtap-admin-base/
 docker-compose -f docker-compose.middleware.yml up -d
 ```
 
+如果你的本地 PostgreSQL 数据卷之前已经通过 `deploy/postgres/*.sql` 自动初始化过，先清空旧卷再重新启动，否则执行 Prisma migration 时会遇到 `P3005`：
+
+```bash
+docker-compose -f docker-compose.middleware.yml down -v
+docker-compose -f docker-compose.middleware.yml up -d
+```
+
 ### 2. 安装后端依赖并初始化数据库
 
 ```bash
@@ -52,8 +61,6 @@ cd backend
 pnpm install
 pnpm prisma:generate
 ```
-
-推荐先启动 PostgreSQL 和 Redis，再执行数据库初始化。
 
 方式一：使用 `Makefile`
 
@@ -66,8 +73,8 @@ make init_migration
 
 ```bash
 cd backend
-npx prisma migrate deploy --schema prisma/schema.prisma
-npx prisma db seed
+pnpm exec prisma migrate deploy --schema prisma/schema.prisma
+pnpm exec prisma db seed
 ```
 
 如果后续修改了 `prisma/schema.prisma`，可以使用下面的命令维护迁移：
@@ -79,14 +86,22 @@ make deploy_migration
 pnpm prisma:generate
 ```
 
-### 3. 启动后端
+### 3. 使用完整 Docker Compose 启动整套服务
+
+```bash
+docker-compose up -d
+```
+
+完整 compose 会在 `postgres` 健康后由 `db-init` 自动执行 `pnpm exec prisma migrate deploy --schema prisma/schema.prisma` 和 `pnpm exec prisma db seed`，随后再启动 `backend`。
+
+### 4. 启动后端
 
 ```bash
 cd backend
 pnpm start:dev
 ```
 
-### 4. 启动前端
+### 5. 启动前端
 
 ```bash
 cd frontend
@@ -94,7 +109,7 @@ pnpm install
 pnpm dev
 ```
 
-### 5. 访问地址
+### 6. 访问地址
 
 - 前端：`http://localhost:9527`
 - 后端：`http://localhost:9528/v1`

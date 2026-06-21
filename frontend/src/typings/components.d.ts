@@ -9,8 +9,8 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AppProvider: typeof import('./../components/common/app-provider.vue')['default']
-    BrandAvatar: typeof import('./../components/custom/brand-avatar.vue')['default']
     BetterScroll: typeof import('./../components/custom/better-scroll.vue')['default']
+    BrandAvatar: typeof import('./../components/custom/brand-avatar.vue')['default']
     ButtonIcon: typeof import('./../components/custom/button-icon.vue')['default']
     CountTo: typeof import('./../components/custom/count-to.vue')['default']
     DarkModeContainer: typeof import('./../components/common/dark-mode-container.vue')['default']
@@ -28,7 +28,6 @@ declare module 'vue' {
     IconIcRoundRemove: typeof import('~icons/ic/round-remove')['default']
     IconIcRoundSearch: typeof import('~icons/ic/round-search')['default']
     IconLocalBanner: typeof import('~icons/local/banner')['default']
-    IconLocalLogo: typeof import('~icons/local/logo')['default']
     IconMdiArrowDownThin: typeof import('~icons/mdi/arrow-down-thin')['default']
     IconMdiArrowUpThin: typeof import('~icons/mdi/arrow-up-thin')['default']
     IconMdiDrag: typeof import('~icons/mdi/drag')['default']
@@ -88,6 +87,7 @@ declare module 'vue' {
     ReloadButton: typeof import('./../components/common/reload-button.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SoybeanAvatar: typeof import('./../components/custom/soybean-avatar.vue')['default']
     SvgIcon: typeof import('./../components/custom/svg-icon.vue')['default']
     SystemLogo: typeof import('./../components/common/system-logo.vue')['default']
     TableColumnSetting: typeof import('./../components/advanced/table-column-setting.vue')['default']
