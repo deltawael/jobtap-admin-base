@@ -3,7 +3,6 @@ import { getRgb } from '@sa/color';
 import { DARK_CLASS } from '@/constants/app';
 import { localStg } from '@/utils/storage';
 import { toggleHtmlClass } from '@/utils/common';
-import systemLogo from '@/assets/svg-icon/logo.svg?raw';
 import { $t } from '@/locales';
 
 export function setupLoading() {
@@ -12,6 +11,8 @@ export function setupLoading() {
   const { r, g, b } = getRgb(themeColor);
 
   const primaryColor = `--primary-color: ${r} ${g} ${b}`;
+  const baseUrl = import.meta.env.VITE_BASE_URL || '/';
+  const logoSrc = `${baseUrl}logo.png`;
 
   if (darkMode) {
     toggleHtmlClass(DARK_CLASS).add();
@@ -24,8 +25,6 @@ export function setupLoading() {
     'right-0 bottom-0 animate-delay-1500'
   ];
 
-  const logoWithClass = systemLogo.replace('<svg', `<svg class="size-128px text-primary"`);
-
   const dot = loadingClasses
     .map(item => {
       return `<div class="absolute w-16px h-16px bg-primary rounded-8px animate-pulse ${item}"></div>`;
@@ -34,7 +33,7 @@ export function setupLoading() {
 
   const loading = `
 <div class="fixed-center flex-col bg-layout" style="${primaryColor}">
-  ${logoWithClass}
+  <img src="${logoSrc}" alt="logo" class="w-128px h-128px object-contain" />
   <div class="w-56px h-56px my-36px">
     <div class="relative h-full animate-spin">
       ${dot}
