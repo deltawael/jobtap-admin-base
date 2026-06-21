@@ -14,7 +14,7 @@ ARG PNPM_VERSION=9.1.2
 FROM node:${NODE_VERSION}-alpine AS base
 
 # Set working directory for all build stages.
-WORKDIR /usr/src/app/soybean/backend
+WORKDIR /usr/src/app/jobtap-admin-base/backend
 
 # 生产部署可注释
 RUN apk --no-cache add curl
@@ -29,7 +29,7 @@ FROM base AS deps
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.local/share/pnpm/store to speed up subsequent builds.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store/soybean-admin/backend \
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store/jobtap-admin-base/backend \
     pnpm install --prod --frozen-lockfile
 
 ################################################################################
@@ -38,7 +38,7 @@ FROM deps AS build
 
 # Download additional development dependencies before building, as some projects require
 # "devDependencies" to be installed to build. If you don't need this, remove this step.
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store/soybean-admin/backend \
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store/jobtap-admin-base/backend \
     pnpm install --frozen-lockfile
 
 # Copy the rest of the source files into the image.
@@ -57,8 +57,8 @@ ENV NODE_ENV production
 
 # Create log directory according to ecosystem.config.js specifications.
 USER root
-RUN mkdir -p /usr/src/app/soybean/backend/logs && \
-    chown -R node:node /usr/src/app/soybean/backend/logs
+RUN mkdir -p /usr/src/app/jobtap-admin-base/backend/logs && \
+    chown -R node:node /usr/src/app/jobtap-admin-base/backend/logs
 
 # Run the application as a non-root user.
 USER node
@@ -68,8 +68,8 @@ COPY package.json .
 
 # Copy the production dependencies from the deps stage and also
 # the built application from the build stage into the image.
-COPY --from=build /usr/src/app/soybean/backend/node_modules ./node_modules
-COPY --from=build /usr/src/app/soybean/backend/dist ./dist
+COPY --from=build /usr/src/app/jobtap-admin-base/backend/node_modules ./node_modules
+COPY --from=build /usr/src/app/jobtap-admin-base/backend/dist ./dist
 COPY ./ecosystem.config.js ./ecosystem.config.js
 
 

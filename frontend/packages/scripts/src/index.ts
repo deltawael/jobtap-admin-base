@@ -37,19 +37,19 @@ interface CommandArg {
 export async function setupCli() {
   const cliOptions = await loadCliOptions();
 
-  const cli = cac(blue('soybean-admin'));
+  const cli = cac(blue('jobtap-admin-base'));
 
   cli
     .version(lightGreen(version))
     .option(
       '-e, --execute [command]',
-      "Execute additional command after bumping and before git commit. Defaults to 'npx soy changelog'"
+      "Execute additional command after bumping and before git commit. Defaults to 'pnpm sa changelog'"
     )
     .option('-p, --push', 'Indicates whether to push the git commit and tag')
     .option('-t, --total', 'Generate changelog by total tags')
     .option(
       '-c, --cleanupDir <dir>',
-      'The glob pattern of dirs to cleanup, If not set, it will use the default value, Multiple values use "," to separate them'
+      'The glob pattern of dirs to cleanup. If not set, it will use the default value. Multiple values use "," to separate them'
     )
     .option('-l, --lang <lang>', 'display lang of cli', { default: 'en-us', type: [String] })
     .help();
@@ -68,13 +68,13 @@ export async function setupCli() {
       }
     },
     'git-commit': {
-      desc: 'git commit, generate commit message which match Conventional Commits standard',
+      desc: 'git commit, generate commit message which matches Conventional Commits',
       action: async args => {
         await gitCommit(args?.lang);
       }
     },
     'git-commit-verify': {
-      desc: 'verify git commit message, make sure it match Conventional Commits standard',
+      desc: 'verify git commit message, make sure it matches Conventional Commits',
       action: async args => {
         await gitCommitVerify(args?.lang, cliOptions.gitCommitVerifyIgnores);
       }

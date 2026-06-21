@@ -14,7 +14,7 @@ ARG PNPM_VERSION=9.1.2
 FROM node:${NODE_VERSION}-alpine AS base
 
 # Set working directory for all build stages.
-WORKDIR /usr/src/app/soybean/frontend
+WORKDIR /usr/src/app/jobtap-admin-base/frontend
 
 # Install pnpm.
 RUN --mount=type=cache,target=/root/.npm \
@@ -31,7 +31,7 @@ COPY . .
 # Leverage a cache mount to /root/.local/share/pnpm/store to speed up subsequent builds.
 # Leverage bind mounts to package.json and pnpm-lock.yaml to avoid having to copy them
 # into this layer.
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store/soybean-admin/frontend \
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store/jobtap-admin-base/frontend \
     pnpm install
 
 ################################################################################
@@ -53,7 +53,7 @@ RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
 
 COPY nginx.conf /etc/nginx/nginx.conf
 
-COPY --from=build /usr/src/app/soybean/frontend/dist/ .
+COPY --from=build /usr/src/app/jobtap-admin-base/frontend/dist/ .
 
 EXPOSE 80
 

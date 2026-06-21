@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'soybean-admin-nest-backend',
+      name: 'jobtap-admin-base-backend',
       script: './dist/apps/base-system/src/main.js',
       autorestart: true,
       instances: -1,

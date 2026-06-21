@@ -80,7 +80,7 @@ export class AppController {
   @Get('apikey-protected-set')
   @Public()
   async apiKeySet() {
-    await this.simpleApiKeyService.addKey('soybean-api-key');
+    await this.simpleApiKeyService.addKey('jobtap-api-key');
   }
 
   @Get('apikey-protected')
@@ -99,8 +99,8 @@ export class AppController {
   @Public()
   async signProtectedSet() {
     await this.complexApiKeyService.addKey(
-      'soybean-api-key',
-      'soybean-api-secret',
+      'jobtap-api-key',
+      'jobtap-api-secret',
     );
   }
 

@@ -3,18 +3,18 @@ services:
     image: postgres:16.3
     environment:
       TZ: Asia/Shanghai
-      POSTGRES_PASSWORD: soybean@123.
-      POSTGRES_USER: soybean
-      POSTGRES_DB: soybean-admin-nest-backend
+      POSTGRES_PASSWORD: jobtap@123.
+      POSTGRES_USER: jobtap
+      POSTGRES_DB: jobtap-admin-base-backend
     ports:
       - "25432:5432"
     volumes:
-      - soybean-admin-postgres_data:/usr/share/docker/postgresql
+      - jobtap-admin-base-postgres_data:/usr/share/docker/postgresql
       - ./deploy/postgres:/docker-entrypoint-initdb.d
     networks:
-      - soybean-admin
+      - jobtap-admin-base
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U soybean -d soybean-admin-nest-backend"]
+      test: ["CMD-SHELL", "pg_isready -U jobtap -d jobtap-admin-base-backend"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,9 +27,9 @@ services:
     ports:
       - "26379:6379"
     volumes:
-      - soybean-admin-redis_data:/data
+      - jobtap-admin-base-redis_data:/data
     networks:
-      - soybean-admin
+      - jobtap-admin-base
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "123456", "ping"]
       interval: 10s
@@ -37,8 +37,8 @@ services:
       retries: 5
 
 volumes:
-  soybean-admin-postgres_data:
-  soybean-admin-redis_data:
+  jobtap-admin-base-postgres_data:
+  jobtap-admin-base-redis_data:
 
 networks:
-  soybean-admin:
+  jobtap-admin-base:

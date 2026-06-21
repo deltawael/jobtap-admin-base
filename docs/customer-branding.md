@@ -103,7 +103,7 @@ After each customer customization, verify the following:
 7. Swagger title and description are updated.
 8. Default seed super user display name is updated.
 
-## Intentionally Not Customized Yet
+## Still Intentionally Retained
 
 The following areas are intentionally left unchanged in the current branding scope because they are internal engineering identifiers or upstream tool references:
 

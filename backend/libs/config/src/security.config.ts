@@ -6,11 +6,11 @@ export const securityRegToken = 'security';
 
 export const SecurityConfig = registerAs(securityRegToken, () => ({
   casbinModel: getEnvString('CASBIN_MODEL', 'model.conf'),
-  jwtSecret: getEnvString('JWT_SECRET', 'JWT_SECRET-soybean-admin-nest!@#123.'),
+  jwtSecret: getEnvString('JWT_SECRET', 'JWT_SECRET-jobtap-admin-base!@#123.'),
   jwtExpiresIn: getEnvNumber('JWT_EXPIRE_IN', 60 * 60 * 2),
   refreshJwtSecret: getEnvString(
     'REFRESH_TOKEN_SECRET',
-    'REFRESH_TOKEN_SECRET-soybean-admin-nest!@#123.',
+    'REFRESH_TOKEN_SECRET-jobtap-admin-base!@#123.',
   ),
   refreshJwtExpiresIn: getEnvNumber('REFRESH_TOKEN_EXPIRE_IN', 60 * 60 * 12),
   signReqTimestampDisparity: getEnvNumber(
