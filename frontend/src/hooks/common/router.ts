@@ -68,11 +68,13 @@ export function useRouterPush(inSetup = true) {
       }
     };
 
-    const redirect = redirectUrl || route.value.fullPath;
+    const redirect = redirectUrl ?? route.value.fullPath;
 
-    options.query = {
-      redirect
-    };
+    if (redirect) {
+      options.query = {
+        redirect
+      };
+    }
 
     return routerPushByKey('login', options);
   }

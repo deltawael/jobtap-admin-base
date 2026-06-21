@@ -270,6 +270,14 @@ export const useTabStore = defineStore(SetupStoreId.Tab, () => {
     }
   }
 
+  /** Reset tab store on logout */
+  function resetStore() {
+    tabs.value = [];
+    activeTabId.value = '';
+    homeTab.value = undefined;
+    localStg.remove('globalTabs');
+  }
+
   /** Cache tabs */
   function cacheTabs() {
     if (!themeStore.tab.cache) return;
@@ -301,6 +309,7 @@ export const useTabStore = defineStore(SetupStoreId.Tab, () => {
     resetTabLabel,
     isTabRetain,
     updateTabsByLocale,
+    resetStore,
     getTabIdByRoute,
     cacheTabs
   };

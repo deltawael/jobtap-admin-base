@@ -44,12 +44,12 @@ export const useAuthStore = defineStore(SetupStoreId.Auth, () => {
     clearAuthStorage();
 
     authStore.$reset();
+    tabStore.resetStore();
 
     if (!route.meta.constant) {
-      await toLogin();
+      await toLogin(undefined, '');
     }
 
-    tabStore.cacheTabs();
     routeStore.resetStore();
   }
 
