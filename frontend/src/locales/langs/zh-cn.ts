@@ -1,6 +1,10 @@
+import { brandConfig } from '@/config/brand';
+
+const projectNews = brandConfig.projectNews['zh-CN'];
+
 const local: App.I18n.Schema = {
   system: {
-    title: 'Soybean 管理系统',
+    title: brandConfig.systemTitle['zh-CN'],
     updateTitle: '系统版本更新通知',
     updateContent: '检测到系统有新版本发布，是否立即刷新页面？',
     updateConfirm: '立即刷新',
@@ -241,11 +245,11 @@ const local: App.I18n.Schema = {
       projectNews: {
         title: '项目动态',
         moreNews: '更多动态',
-        desc1: 'Soybean 在2021年5月28日创建了开源项目 soybean-admin!',
-        desc2: 'Yanbowe 向 soybean-admin 提交了一个bug，多标签栏不会自适应。',
-        desc3: 'Soybean 准备为 soybean-admin 的发布做充分的准备工作!',
-        desc4: 'Soybean 正在忙于为soybean-admin写项目说明文档！',
-        desc5: 'Soybean 刚才把工作台页面随便写了一些，凑合能看了！'
+        desc1: projectNews[0],
+        desc2: projectNews[1],
+        desc3: projectNews[2],
+        desc4: projectNews[3],
+        desc5: projectNews[4]
       },
       creativity: '创意'
     },

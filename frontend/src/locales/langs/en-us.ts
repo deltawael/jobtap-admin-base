@@ -1,6 +1,10 @@
+import { brandConfig } from '@/config/brand';
+
+const projectNews = brandConfig.projectNews['en-US'];
+
 const local: App.I18n.Schema = {
   system: {
-    title: 'SoybeanAdmin',
+    title: brandConfig.systemTitle['en-US'],
     updateTitle: 'System Version Update Notification',
     updateContent: 'A new version of the system has been detected. Do you want to refresh the page immediately?',
     updateConfirm: 'Refresh immediately',
@@ -241,11 +245,11 @@ const local: App.I18n.Schema = {
       projectNews: {
         title: 'Project News',
         moreNews: 'More News',
-        desc1: 'Soybean created the open source project soybean-admin on May 28, 2021!',
-        desc2: 'Yanbowe submitted a bug to soybean-admin, the multi-tab bar will not adapt.',
-        desc3: 'Soybean is ready to do sufficient preparation for the release of soybean-admin!',
-        desc4: 'Soybean is busy writing project documentation for soybean-admin!',
-        desc5: 'Soybean just wrote some of the workbench pages casually, and it was enough to see!'
+        desc1: projectNews[0],
+        desc2: projectNews[1],
+        desc3: projectNews[2],
+        desc4: projectNews[3],
+        desc5: projectNews[4]
       },
       creativity: 'Creativity'
     },

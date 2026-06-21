@@ -6,6 +6,7 @@ import {
   themeScrollModeOptions,
   themeTabModeOptions
 } from '@/constants/app';
+import { brandConfig } from '@/config/brand';
 import { useThemeStore } from '@/store/modules/theme';
 import { translateOptions } from '@/utils/common';
 import { $t } from '@/locales';
@@ -124,7 +125,7 @@ const isWrapperScrollMode = computed(() => themeStore.layout.scrollMode === 'wra
         type="text"
         size="small"
         class="w-120px"
-        placeholder="SoybeanAdmin"
+        :placeholder="brandConfig.watermarkText"
       />
     </SettingItem>
     <SettingItem key="9" :label="$t('theme.header.multilingual.visible')">

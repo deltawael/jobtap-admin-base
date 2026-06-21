@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue';
 import { loginModuleRecord } from '@/constants/app';
+import { brandConfig } from '@/config/brand';
 import { useAuthStore } from '@/store/modules/auth';
 import { useRouterPush } from '@/hooks/common/router';
 import { useFormRules, useNaiveForm } from '@/hooks/common/form';
@@ -20,7 +21,7 @@ interface FormModel {
 }
 
 const model: FormModel = reactive({
-  identifier: 'Soybean',
+  identifier: brandConfig.demoAccounts.super.identifier,
   password: '123456'
 });
 
@@ -52,19 +53,19 @@ const accounts = computed<Account[]>(() => [
   {
     key: 'super',
     label: $t('page.login.pwdLogin.superAdmin'),
-    identifier: 'Soybean',
+    identifier: brandConfig.demoAccounts.super.identifier,
     password: '123456'
   },
   {
     key: 'admin',
     label: $t('page.login.pwdLogin.admin'),
-    identifier: 'Administrator',
+    identifier: brandConfig.demoAccounts.admin.identifier,
     password: '123456'
   },
   {
     key: 'user',
     label: $t('page.login.pwdLogin.user'),
-    identifier: 'GeneralUser',
+    identifier: brandConfig.demoAccounts.user.identifier,
     password: '123456'
   }
 ]);

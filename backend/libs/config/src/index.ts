@@ -1,6 +1,7 @@
 import { RecordNamePaths } from '@lib/typings/utils';
 
 import { AppConfig, IAppConfig, appConfigToken } from './app.config';
+import { brandConfig } from './brand.config';
 import { CorsConfig, corsRegToken, ICorsConfig } from './cors.config';
 import { RedisConfig, IRedisConfig, redisRegToken } from './redis.config';
 import {
@@ -15,6 +16,7 @@ import {
 } from './throttler.config';
 
 export * from './app.config';
+export * from './brand.config';
 export * from './redis.config';
 export * from './security.config';
 export * from './throttler.config';

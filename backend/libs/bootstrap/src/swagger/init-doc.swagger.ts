@@ -4,7 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import chalk from 'chalk';
 import gradient from 'gradient-string';
 
-import { appConfigToken, ConfigKeyPaths, IAppConfig } from '@lib/config';
+import { appConfigToken, brandConfig, ConfigKeyPaths, IAppConfig } from '@lib/config';
 import { ApiRes } from '@lib/infra/rest/res.response';
 
 import * as packageJson from '../../../../package.json';
@@ -21,21 +21,16 @@ export function initDocSwagger(
   if (!docSwaggerEnable) return;
 
   const documentBuilder = new DocumentBuilder()
-    .setTitle('Soybean Admin NestJS Backend API')
-    .setDescription(
-      'This API serves as the backend service for Soybean Admin, providing a comprehensive set of functionalities for system management and operations.',
-    )
+    .setTitle(brandConfig.apiDocs.title)
+    .setDescription(brandConfig.apiDocs.description)
     .setVersion(packageJson.version)
-    .setTermsOfService('Soybean Terms of Service')
+    .setTermsOfService(brandConfig.apiDocs.termsOfService)
     .setContact(
-      packageJson.author.name,
-      packageJson.author.url,
-      packageJson.author.email,
+      brandConfig.apiDocs.contact.name,
+      brandConfig.apiDocs.contact.url,
+      brandConfig.apiDocs.contact.email,
     )
-    .setLicense(
-      packageJson.license,
-      'https://github.com/soybeanjs/soybean-admin-nestjs/blob/main/LICENSE',
-    );
+    .setLicense(brandConfig.apiDocs.license.name, brandConfig.apiDocs.license.url);
 
   documentBuilder.addSecurity('', {
     description: 'Bearer Authentication',

@@ -1,3 +1,5 @@
+import { brandConfig } from '@/config/brand';
+
 /** Default theme settings */
 export const themeSettings: App.Theme.ThemeSetting = {
   themeScheme: 'light',
@@ -55,7 +57,7 @@ export const themeSettings: App.Theme.ThemeSetting = {
   },
   watermark: {
     visible: false,
-    text: 'SoybeanAdmin'
+    text: brandConfig.watermarkText
   },
   tokens: {
     light: {
