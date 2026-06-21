@@ -16,6 +16,8 @@ declare namespace Env {
     readonly VITE_APP_TITLE: string;
     /** The description of the application */
     readonly VITE_APP_DESC: string;
+    /** Whether to show demo accounts on the login page */
+    readonly VITE_LOGIN_SHOW_DEMO_ACCOUNTS?: CommonType.YesOrNo;
     /** The router history mode */
     readonly VITE_ROUTER_HISTORY_MODE?: RouterHistoryMode;
     /** The prefix of the iconify icon */

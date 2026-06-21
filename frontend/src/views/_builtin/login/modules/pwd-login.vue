@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue';
-import { loginModuleRecord } from '@/constants/app';
 import { brandConfig } from '@/config/brand';
 import { useAuthStore } from '@/store/modules/auth';
-import { useRouterPush } from '@/hooks/common/router';
 import { useFormRules, useNaiveForm } from '@/hooks/common/form';
 import { $t } from '@/locales';
 
@@ -12,8 +10,8 @@ defineOptions({
 });
 
 const authStore = useAuthStore();
-const { toggleLoginModule } = useRouterPush();
 const { formRef, validate } = useNaiveForm();
+const showDemoAccounts = brandConfig.login.showDemoAccounts;
 
 interface FormModel {
   identifier: string;
@@ -21,12 +19,11 @@ interface FormModel {
 }
 
 const model: FormModel = reactive({
-  identifier: brandConfig.demoAccounts.super.identifier,
-  password: '123456'
+  identifier: showDemoAccounts ? brandConfig.demoAccounts.super.identifier : '',
+  password: showDemoAccounts ? '123456' : ''
 });
 
 const rules = computed<Record<keyof FormModel, App.Global.FormRule[]>>(() => {
-  // inside computed to make locale reactive, if not apply i18n, you can define it without computed
   const { formRules } = useFormRules();
 
   return {
@@ -89,29 +86,20 @@ async function handleAccountLogin(account: Account) {
       />
     </NFormItem>
     <NSpace vertical :size="24">
-      <div class="flex-y-center justify-between">
+      <div class="flex-y-center">
         <NCheckbox>{{ $t('page.login.pwdLogin.rememberMe') }}</NCheckbox>
-        <NButton quaternary @click="toggleLoginModule('reset-pwd')">
-          {{ $t('page.login.pwdLogin.forgetPassword') }}
-        </NButton>
       </div>
       <NButton type="primary" size="large" round block :loading="authStore.loginLoading" @click="handleSubmit">
         {{ $t('common.confirm') }}
       </NButton>
-      <div class="flex-y-center justify-between gap-12px">
-        <NButton class="flex-1" block @click="toggleLoginModule('code-login')">
-          {{ $t(loginModuleRecord['code-login']) }}
-        </NButton>
-        <NButton class="flex-1" block @click="toggleLoginModule('register')">
-          {{ $t(loginModuleRecord.register) }}
-        </NButton>
-      </div>
-      <NDivider class="text-14px text-#666 !m-0">{{ $t('page.login.pwdLogin.otherAccountLogin') }}</NDivider>
-      <div class="flex-center gap-12px">
-        <NButton v-for="item in accounts" :key="item.key" type="primary" @click="handleAccountLogin(item)">
-          {{ item.label }}
-        </NButton>
-      </div>
+      <template v-if="showDemoAccounts">
+        <NDivider class="text-14px text-#666 !m-0">{{ $t('page.login.pwdLogin.otherAccountLogin') }}</NDivider>
+        <div class="flex-center gap-12px">
+          <NButton v-for="item in accounts" :key="item.key" type="primary" @click="handleAccountLogin(item)">
+            {{ item.label }}
+          </NButton>
+        </div>
+      </template>
     </NSpace>
   </NForm>
 </template>

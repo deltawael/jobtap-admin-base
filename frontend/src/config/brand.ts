@@ -1,5 +1,8 @@
 const appTitle = import.meta.env.VITE_APP_TITLE || 'JobTap Admin';
 const appDescription = import.meta.env.VITE_APP_DESC || 'JobTap Admin is a configurable admin workspace.';
+const showLoginDemoAccounts = import.meta.env.VITE_LOGIN_SHOW_DEMO_ACCOUNTS
+  ? import.meta.env.VITE_LOGIN_SHOW_DEMO_ACCOUNTS === 'Y'
+  : !import.meta.env.PROD;
 
 export const brandConfig = {
   name: 'JobTap',
@@ -13,6 +16,9 @@ export const brandConfig = {
   footer: {
     text: 'Copyright MIT © 2026 JobTap',
     href: 'https://opensource.org/license/mit'
+  },
+  login: {
+    showDemoAccounts: showLoginDemoAccounts
   },
   demoAccounts: {
     super: {
