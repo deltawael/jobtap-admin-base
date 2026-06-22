@@ -3,12 +3,14 @@ import { NAvatar, NButton, NPopconfirm, NTag } from 'naive-ui';
 import { enableStatusRecord } from '@/constants/business';
 import { deleteUser, fetchGetUserList } from '@/service/api';
 import { useAppStore } from '@/store/modules/app';
+import { useSvgIcon } from '@/hooks/common/icon';
 import { useTable, useTableOperate } from '@/hooks/common/table';
 import { $t } from '@/locales';
 import UserOperateDrawer from './modules/user-operate-drawer.vue';
 import UserSearch from './modules/user-search.vue';
 
 const appStore = useAppStore();
+const { SvgIconVNode } = useSvgIcon();
 
 const {
   columns,
@@ -26,8 +28,6 @@ const {
   apiParams: {
     current: 1,
     size: 10,
-    // if you want to use the searchParams in Form, you need to define the following properties, and the value is null
-    // the value can not be undefined, otherwise the property in Form will not be reactive
     status: null,
     username: null,
     nickName: null,
@@ -35,74 +35,32 @@ const {
     email: null
   },
   columns: () => [
-    {
-      type: 'selection',
-      align: 'center',
-      width: 48
-    },
-    {
-      key: 'index',
-      title: $t('common.index'),
-      align: 'center',
-      width: 64
-    },
-    {
-      key: 'username',
-      title: $t('page.manage.user.userName'),
-      align: 'center',
-      minWidth: 100
-    },
-    {
-      key: 'domain',
-      title: 'domain',
-      align: 'center',
-      minWidth: 100
-    },
+    { type: 'selection', align: 'center', width: 48 },
+    { key: 'index', title: $t('common.index'), align: 'center', width: 64 },
+    { key: 'username', title: $t('page.manage.user.userName'), align: 'center', minWidth: 120 },
     {
       key: 'avatar',
-      title: 'avatar',
+      title: $t('page.manage.user.avatar'),
       align: 'center',
       minWidth: 80,
-      render: row => {
-        return <NAvatar size="small" src={row.avatar} />;
-      }
+      render: row => (
+        <NAvatar size="small" src={row.avatar || undefined}>
+          {SvgIconVNode({ icon: 'ph:user-circle', fontSize: 18 })}
+        </NAvatar>
+      )
     },
-    {
-      key: 'nickName',
-      title: $t('page.manage.user.nickName'),
-      align: 'center',
-      minWidth: 100
-    },
-    {
-      key: 'phoneNumber',
-      title: $t('page.manage.user.userPhone'),
-      align: 'center',
-      width: 120
-    },
-    {
-      key: 'email',
-      title: $t('page.manage.user.userEmail'),
-      align: 'center',
-      minWidth: 200
-    },
+    { key: 'nickName', title: $t('page.manage.user.nickName'), align: 'center', minWidth: 120 },
+    { key: 'phoneNumber', title: $t('page.manage.user.userPhone'), align: 'center', width: 140 },
+    { key: 'email', title: $t('page.manage.user.userEmail'), align: 'center', minWidth: 220 },
     {
       key: 'status',
       title: $t('page.manage.user.userStatus'),
       align: 'center',
       width: 100,
       render: row => {
-        if (row.status === null) {
-          return null;
-        }
-
-        const tagMap: Record<Api.Common.EnableStatus, NaiveUI.ThemeColor> = {
-          ENABLED: 'success',
-          DISABLED: 'warning'
-        };
-
-        const label = $t(enableStatusRecord[row.status]);
-
-        return <NTag type={tagMap[row.status]}>{label}</NTag>;
+        if (row.status === null) return null;
+        const tagMap: Record<Api.Common.EnableStatus, NaiveUI.ThemeColor> = { ENABLED: 'success', DISABLED: 'warning' };
+        return <NTag type={tagMap[row.status]}>{$t(enableStatusRecord[row.status])}</NTag>;
       }
     },
     {
@@ -131,27 +89,14 @@ const {
   ]
 });
 
-const {
-  drawerVisible,
-  operateType,
-  editingData,
-  handleAdd,
-  handleEdit,
-  checkedRowKeys,
-  onBatchDeleted,
-  onDeleted
-  // closeDrawer
-} = useTableOperate(data, getData);
+const { drawerVisible, operateType, editingData, handleAdd, handleEdit, checkedRowKeys, onBatchDeleted, onDeleted } =
+  useTableOperate(data, getData);
 
 async function handleBatchDelete() {
-  // request
-  console.log(checkedRowKeys.value);
-
   onBatchDeleted();
 }
 
 async function handleDelete(id: string) {
-  // request
   const { error } = await deleteUser(id);
   if (error) return;
   await onDeleted();

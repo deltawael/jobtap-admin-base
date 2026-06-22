@@ -251,6 +251,7 @@ const local: App.I18n.Schema = {
       user: {
         title: '用户列表',
         userName: '用户名',
+        avatar: '头像',
         userGender: '性别',
         nickName: '昵称',
         userPhone: '手机号',
@@ -260,7 +261,7 @@ const local: App.I18n.Schema = {
         form: {
           userName: '请输入用户名',
           password: '请输入密码',
-          domain: '请输入域',
+          avatar: '请输入头像地址',
           userGender: '请选择性别',
           nickName: '请输入昵称',
           userPhone: '请输入手机号',

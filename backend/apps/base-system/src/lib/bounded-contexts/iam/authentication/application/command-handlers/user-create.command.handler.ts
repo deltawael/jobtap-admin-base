@@ -1,6 +1,5 @@
 import { BadRequestException, Inject } from '@nestjs/common';
 import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs';
-import { Status } from '@prisma/client';
 
 import { Password } from '@app/base-system/lib/bounded-contexts/iam/authentication/domain/password.value-object';
 
@@ -14,9 +13,7 @@ import { UserReadRepoPort } from '../../ports/user.read.repo-port';
 import { UserWriteRepoPort } from '../../ports/user.write.repo-port';
 
 @CommandHandler(UserCreateCommand)
-export class UserCreateHandler
-  implements ICommandHandler<UserCreateCommand, void>
-{
+export class UserCreateHandler implements ICommandHandler<UserCreateCommand, void> {
   constructor(private readonly publisher: EventPublisher) {}
   @Inject(UserWriteRepoPortToken)
   private readonly userWriteRepository: UserWriteRepoPort;
@@ -24,14 +21,9 @@ export class UserCreateHandler
   private readonly userReadRepoPort: UserReadRepoPort;
 
   async execute(command: UserCreateCommand) {
-    const existingUser = await this.userReadRepoPort.getUserByUsername(
-      command.username,
-    );
-
+    const existingUser = await this.userReadRepoPort.getUserByUsername(command.username);
     if (existingUser) {
-      throw new BadRequestException(
-        `A user with code ${command.username} already exists.`,
-      );
+      throw new BadRequestException(`A user with code ${command.username} already exists.`);
     }
 
     const hashedPassword = await Password.hash(command.password);
@@ -41,7 +33,7 @@ export class UserCreateHandler
       nickName: command.nickName,
       password: hashedPassword.getValue(),
       domain: command.domain,
-      status: Status.ENABLED,
+      status: command.status,
       avatar: command.avatar,
       email: command.email,
       phoneNumber: command.phoneNumber,
@@ -50,7 +42,7 @@ export class UserCreateHandler
     };
 
     const user = new User(userCreateProperties);
-    await this.userWriteRepository.save(user);
+    await this.userWriteRepository.save(user, command.roleIds);
     await user.created();
     this.publisher.mergeObjectContext(user);
     user.commit();

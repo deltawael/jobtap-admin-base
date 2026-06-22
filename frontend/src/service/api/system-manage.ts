@@ -237,10 +237,11 @@ export function deleteRoute(id: number) {
   });
 }
 
-export type UserModel = Pick<
-  Api.SystemManage.User,
-  'username' | 'password' | 'domain' | 'nickName' | 'phoneNumber' | 'email' | 'status'
->;
+export type UserModel = Partial<Pick<Api.SystemManage.User, 'id'>> &
+  Pick<
+    Api.SystemManage.User,
+    'username' | 'password' | 'avatar' | 'nickName' | 'phoneNumber' | 'email' | 'status' | 'roleIds'
+  >;
 
 /**
  * 创建用户

@@ -1,6 +1,15 @@
 import { ApiProperty, OmitType } from '@nestjs/swagger';
+import { Status } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 
 export class UserCreateDto {
   @ApiProperty({ required: true })
@@ -16,14 +25,13 @@ export class UserCreateDto {
   password: string;
 
   @ApiProperty({ required: true })
-  @IsString({ message: 'domain must be a string' })
-  @IsNotEmpty({ message: 'domain cannot be empty' })
-  domain: string;
-
-  @ApiProperty({ required: true })
   @IsString({ message: 'nickName must be a string' })
   @IsNotEmpty({ message: 'nickName cannot be empty' })
   nickName: string;
+
+  @ApiProperty({ required: true, enum: Object.values(Status) })
+  @IsEnum(Status, { message: 'status must be a valid enum value' })
+  status: Status;
 
   @ApiProperty({ type: 'string', required: false, nullable: true })
   @IsOptional()
@@ -42,12 +50,15 @@ export class UserCreateDto {
   @IsString({ message: 'phoneNumber must be a string or null' })
   @Type(() => String)
   phoneNumber: string | null;
+
+  @ApiProperty({ type: [String], required: true })
+  @IsArray({ message: 'roleIds must be an array' })
+  @ArrayNotEmpty({ message: 'roleIds cannot be empty' })
+  @IsString({ each: true, message: 'each roleId must be a string' })
+  roleIds: string[];
 }
 
-export class UserUpdateDto extends OmitType(UserCreateDto, [
-  'password',
-  'domain',
-]) {
+export class UserUpdateDto extends OmitType(UserCreateDto, ['password']) {
   @ApiProperty({ required: true })
   @IsString({ message: 'id must be a string' })
   @IsNotEmpty({ message: 'id cannot be empty' })

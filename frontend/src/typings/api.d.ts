@@ -143,13 +143,15 @@ declare namespace Api {
       /** domain */
       domain: string;
       /** avatar */
-      avatar: string;
+      avatar: string | null;
       /** user nick name */
       nickName: string;
       /** user phone */
-      phoneNumber: string;
+      phoneNumber: string | null;
       /** user email */
-      email: string;
+      email: string | null;
+      /** role ids */
+      roleIds: string[];
     }>;
 
     /** user search params */
