@@ -1,9 +1,9 @@
 <script setup lang="tsx">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, reactive, watch } from 'vue';
 import type { SelectOption } from 'naive-ui';
 import { enableStatusOptions, menuIconTypeOptions, menuTypeOptions } from '@/constants/business';
 import type { RouteModel } from '@/service/api';
-import { createRoute, fetchGetAllRoles, updateRoute } from '@/service/api';
+import { createRoute, updateRoute } from '@/service/api';
 import { useFormRules, useNaiveForm } from '@/hooks/common/form';
 import { getLocalIcons } from '@/utils/icon';
 import { $t } from '@/locales';
@@ -145,22 +145,6 @@ const layoutOptions: CommonType.Option[] = [
   }
 ];
 
-/** the enabled role options */
-const roleOptions = ref<CommonType.Option<string>[]>([]);
-
-async function getRoleOptions() {
-  const { error, data } = await fetchGetAllRoles();
-
-  if (!error) {
-    const options = data.map(item => ({
-      label: item.name,
-      value: item.code
-    }));
-
-    roleOptions.value = [...options];
-  }
-}
-
 function handleInitModel() {
   Object.assign(model, createDefaultModel());
 
@@ -253,7 +237,6 @@ watch(visible, () => {
   if (visible.value) {
     handleInitModel();
     restoreValidation();
-    getRoleOptions();
   }
 });
 
