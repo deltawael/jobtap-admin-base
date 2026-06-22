@@ -11,6 +11,7 @@ JobTap Admin Base 是一个基于 Vue 3 + Vite + NestJS 的中后台基础项目
 - [简介](#简介)
 - [项目结构](#项目结构)
 - [快速开始](#快速开始)
+- [底座使用](#底座使用)
 - [品牌定制](#品牌定制)
 - [技术栈](#技术栈)
 
@@ -114,6 +115,12 @@ pnpm dev
 - 前端：`http://localhost:9527`
 - 后端：`http://localhost:9528/v1`
 - Swagger：`http://127.0.0.1:9528/api-docs`
+
+## 底座使用
+
+作为后续项目底座的使用说明见：
+
+- [docs/base-project-guide.md](./docs/base-project-guide.md)
 
 ## 品牌定制
 
