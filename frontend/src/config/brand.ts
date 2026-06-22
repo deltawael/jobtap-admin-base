@@ -14,8 +14,8 @@ export const brandConfig = {
   },
   watermarkText: 'JobTap',
   footer: {
-    text: 'Copyright MIT © 2026 JobTap',
-    href: 'https://opensource.org/license/mit'
+    text: 'Copyright © 2026 JobTap',
+    href: null
   },
   login: {
     showDemoAccounts: showLoginDemoAccounts

@@ -8,9 +8,12 @@ defineOptions({
 
 <template>
   <DarkModeContainer class="h-full flex-center">
-    <a :href="brandConfig.footer.href" target="_blank" rel="noopener noreferrer">
+    <a v-if="brandConfig.footer.href" :href="brandConfig.footer.href" target="_blank" rel="noopener noreferrer">
       {{ brandConfig.footer.text }}
     </a>
+    <span v-else>
+      {{ brandConfig.footer.text }}
+    </span>
   </DarkModeContainer>
 </template>
 
