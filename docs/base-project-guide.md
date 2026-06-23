@@ -84,16 +84,33 @@ jobtap-admin-base/
 
 统一使用 Prisma：
 
-- 结构来源：`backend/prisma/migrations`
+- 结构来源：`backend/prisma/migrations/0_target_state_baseline`
 - 初始数据来源：`backend/prisma/seeds`
+
+当前仓库已经把旧迁移链压成单一 0 基线。
+
+含义是：
+
+- 新环境直接执行 `prisma migrate deploy` 即可完成建表
+- 旧环境如果来自历史迁移链或 `deploy/postgres/*.sql`，建议重置数据库，不再保证原地升级
 
 `deploy/postgres` 下的 SQL 仅作为历史参考保留，不再作为当前推荐初始化路径。
 
 ### 4.3 迁移与种子原则
 
-- 新增表结构：优先新增 migration
+- 新增表结构：基于当前基线继续追加 Prisma migration
 - 新增基础数据：优先补 seed
 - 不要再把新的初始化逻辑写回 `deploy/postgres/*.sql` 当作主流程
+- 不要为普通变更重新生成全量 baseline；只有在明确要 squash 历史时才重建 baseline
+
+推荐流程：
+
+```bash
+cd backend
+pnpm exec prisma migrate dev --schema prisma/schema.prisma --name <change-name> --create-only
+pnpm exec prisma migrate deploy --schema prisma/schema.prisma
+pnpm prisma:generate
+```
 
 ## 5. 后续项目接入建议
 
@@ -194,3 +211,5 @@ pnpm exec tsc -p tsconfig.build.json --noEmit
 - 通用能力优化优先反哺到底座
 
 这样后续新项目启动时，才不会每次都从旧模板重新清理一遍。
+
+

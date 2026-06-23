@@ -1,15 +1,15 @@
 export interface IAuthentication {
   uid: string;
+  userId: string;
   username: string;
   domain: string;
+  tenantId: string | null;
+  actorType: 'system_admin' | 'tenant_admin' | 'tenant_user';
 }
 
 export interface ApiResponse<T = any> {
   code: number;
   message: string;
-  // timestamp: string;
-  // requestId: string;
-  // path: string;
   error?: {
     code: number;
     message: string;
@@ -26,3 +26,4 @@ export type UpdateAuditInfoProperties = Readonly<{
   updatedAt: Date | null;
   updatedBy: string | null;
 }>;
+

@@ -56,6 +56,8 @@ export class AuthenticationService {
       tokensAggregate.userId,
       tokenDetails.username,
       tokenDetails.domain,
+      null,
+      tokenDetails.domain === 'built-in' ? 'system_admin' : 'tenant_user',
     );
 
     tokensAggregate.apply(
@@ -99,6 +101,8 @@ export class AuthenticationService {
       user.id,
       user.username,
       user.domain,
+      (user as any).tenantId ?? null,
+      this.resolveActorType(user as any),
     );
 
     userAggregate.apply(
@@ -145,11 +149,16 @@ export class AuthenticationService {
     userId: string,
     username: string,
     domain: string,
+    tenantId: string | null,
+    actorType: IAuthentication['actorType'],
   ): Promise<{ token: string; refreshToken: string }> {
     const payload: IAuthentication = {
       uid: userId,
-      username: username,
-      domain: domain,
+      userId,
+      username,
+      domain,
+      tenantId,
+      actorType,
     };
     const accessToken = await this.jwtService.signAsync(payload);
     const refreshToken = await this.jwtService.signAsync(payload, {
@@ -159,4 +168,15 @@ export class AuthenticationService {
 
     return { token: accessToken, refreshToken };
   }
+
+  private resolveActorType(user: any): IAuthentication['actorType'] {
+    if (user?.actorType) {
+      return user.actorType;
+    }
+    if (user?.built_in && user?.domain === 'built-in') {
+      return 'system_admin';
+    }
+    return 'tenant_user';
+  }
 }
+

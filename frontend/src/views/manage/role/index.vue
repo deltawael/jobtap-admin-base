@@ -1,7 +1,5 @@
 <script setup lang="tsx">
-import { ref } from 'vue';
 import { NButton, NPopconfirm, NTag } from 'naive-ui';
-import { useBoolean } from '@sa/hooks';
 import { enableStatusRecord } from '@/constants/business';
 import { deleteRole, fetchGetRoleList } from '@/service/api';
 import { useAppStore } from '@/store/modules/app';
@@ -9,13 +7,8 @@ import { useTable, useTableOperate } from '@/hooks/common/table';
 import { $t } from '@/locales';
 import RoleOperateDrawer from './modules/role-operate-drawer.vue';
 import RoleSearch from './modules/role-search.vue';
-import MenuAuthModal from './modules/menu-auth-modal.vue';
-import ApiEndpointAuthModal from './modules/api-endpoint-auth-modal.vue';
 
 const appStore = useAppStore();
-
-const { bool: menuAuthVisible, setTrue: openMenuAuthModal } = useBoolean();
-const { bool: apiEndpointAuthVisible, setTrue: openApiEndpointAuthModal } = useBoolean();
 
 const {
   columns,
@@ -32,8 +25,6 @@ const {
   apiParams: {
     current: 1,
     size: 10,
-    // if you want to use the searchParams in Form, you need to define the following properties, and the value is null
-    // the value can not be undefined, otherwise the property in Form will not be reactive
     status: null,
     name: null,
     code: null
@@ -54,18 +45,32 @@ const {
       key: 'name',
       title: $t('page.manage.role.roleName'),
       align: 'center',
-      minWidth: 120
+      minWidth: 140
     },
     {
       key: 'code',
       title: $t('page.manage.role.roleCode'),
       align: 'center',
-      minWidth: 120
+      minWidth: 140
+    },
+    {
+      key: 'templateName',
+      title: '模板',
+      align: 'center',
+      minWidth: 140,
+      render: row => row.templateName || '-'
+    },
+    {
+      key: 'capabilityCount',
+      title: '能力数',
+      align: 'center',
+      width: 120,
+      render: row => <NTag type="info">{row.capabilityCount || 0}</NTag>
     },
     {
       key: 'description',
       title: $t('page.manage.role.roleDesc'),
-      minWidth: 120
+      minWidth: 180
     },
     {
       key: 'status',
@@ -82,34 +87,16 @@ const {
           DISABLED: 'warning'
         };
 
-        const label = $t(enableStatusRecord[row.status]);
-
-        return <NTag type={tagMap[row.status]}>{label}</NTag>;
+        return <NTag type={tagMap[row.status]}>{$t(enableStatusRecord[row.status])}</NTag>;
       }
     },
     {
       key: 'operate',
       title: $t('common.operate'),
       align: 'center',
-      minWidth: 160,
+      minWidth: 140,
       render: row => (
         <div class="flex-center gap-8px">
-          <NButton
-            type="primary"
-            quaternary
-            size="small"
-            onClick={() => handleRoleAction(row.id, row.code, openMenuAuthModal)}
-          >
-            {$t('page.manage.role.menuAuth')}
-          </NButton>
-          <NButton
-            type="primary"
-            quaternary
-            size="small"
-            onClick={() => handleRoleAction(row.id, row.code, openApiEndpointAuthModal)}
-          >
-            {$t('page.manage.role.permissionAuth')}
-          </NButton>
           <NButton type="primary" ghost size="small" onClick={() => edit(row.id)}>
             {$t('common.edit')}
           </NButton>
@@ -117,7 +104,7 @@ const {
             {{
               default: () => $t('common.confirmDelete'),
               trigger: () => (
-                <NButton type="error" ghost size="small">
+                <NButton type="error" ghost size="small" disabled={row.builtIn}>
                   {$t('common.delete')}
                 </NButton>
               )
@@ -129,30 +116,14 @@ const {
   ]
 });
 
-const {
-  drawerVisible,
-  operateType,
-  editingData,
-  handleAdd,
-  handleEdit,
-  checkedRowKeys,
-  onBatchDeleted,
-  onDeleted
-  // closeDrawer
-} = useTableOperate(data, getData);
-
-const roleId = ref<string>('-1');
-const roleCode = ref<string>('-1');
+const { drawerVisible, operateType, editingData, handleAdd, handleEdit, checkedRowKeys, onBatchDeleted, onDeleted } =
+  useTableOperate(data, getData);
 
 async function handleBatchDelete() {
-  // request
-  console.log(checkedRowKeys.value);
-
   onBatchDeleted();
 }
 
 async function handleDelete(id: string) {
-  // request
   const { error } = await deleteRole(id);
   if (error) return;
   await onDeleted();
@@ -160,12 +131,6 @@ async function handleDelete(id: string) {
 
 function edit(id: string) {
   handleEdit(id);
-}
-
-function handleRoleAction(id: string, code: string, action: () => void): void {
-  roleId.value = id;
-  roleCode.value = code;
-  action();
 }
 </script>
 
@@ -189,7 +154,7 @@ function handleRoleAction(id: string, code: string, action: () => void): void {
         :data="data"
         size="small"
         :flex-height="!appStore.isMobile"
-        :scroll-x="702"
+        :scroll-x="920"
         :loading="loading"
         remote
         :row-key="row => row.id"
@@ -203,8 +168,6 @@ function handleRoleAction(id: string, code: string, action: () => void): void {
         @submitted="getDataByPage"
       />
     </NCard>
-    <MenuAuthModal v-model:visible="menuAuthVisible" :role-id="roleId" />
-    <ApiEndpointAuthModal v-model:visible="apiEndpointAuthVisible" :role-id="roleId" :role-code="roleCode" />
   </div>
 </template>
 

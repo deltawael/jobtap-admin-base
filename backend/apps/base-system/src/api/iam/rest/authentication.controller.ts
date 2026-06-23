@@ -86,12 +86,16 @@ export class AuthenticationController {
   async getProfile(@Request() req: any): Promise<ApiRes<any>> {
     const user: IAuthentication = req.user;
     const userRoles = await RedisUtility.instance.smembers(
-      `${CacheConstant.AUTH_TOKEN_PREFIX}${user.uid}`,
+      ``,
     );
     return ApiRes.success({
-      userId: user.uid,
+      userId: user.userId,
       userName: user.username,
+      tenantId: user.tenantId,
+      actorType: user.actorType,
       roles: userRoles,
+      buttons: [],
     });
   }
 }
+

@@ -3,7 +3,7 @@ import { request } from '../request';
 /** get role list */
 export function fetchGetRoleList(params?: Api.SystemManage.RoleSearchParams) {
   return request<Api.SystemManage.RoleList>({
-    url: '/role',
+    url: '/roles',
     method: 'get',
     params
   });
@@ -77,7 +77,22 @@ export function fetchGetMenuTree() {
   });
 }
 
-export type RoleModel = Pick<Api.SystemManage.Role, 'name' | 'code' | 'description' | 'status'>;
+export type RoleModel = Partial<Pick<Api.SystemManage.Role, 'id'>> &
+  Pick<Api.SystemManage.Role, 'name' | 'code' | 'description' | 'status' | 'templateId' | 'capabilityIds'>;
+
+export function fetchGetRoleTemplates() {
+  return request<Api.SystemManage.RoleTemplate[]>({
+    url: '/role-templates',
+    method: 'get'
+  });
+}
+
+export function fetchGetCapabilities() {
+  return request<Api.SystemManage.Capability[]>({
+    url: '/capabilities',
+    method: 'get'
+  });
+}
 
 /**
  * 创建角色
@@ -87,12 +102,9 @@ export type RoleModel = Pick<Api.SystemManage.Role, 'name' | 'code' | 'descripti
  */
 export function createRole(req: RoleModel) {
   return request({
-    url: '/role',
+    url: '/roles',
     method: 'post',
-    data: {
-      pid: '0',
-      ...req
-    }
+    data: req
   });
 }
 
@@ -104,7 +116,7 @@ export function createRole(req: RoleModel) {
  */
 export function updateRole(req: RoleModel) {
   return request({
-    url: '/role',
+    url: `/roles/${req.id}`,
     method: 'put',
     data: req
   });
@@ -118,7 +130,7 @@ export function updateRole(req: RoleModel) {
  */
 export function deleteRole(id: string) {
   return request({
-    url: `/role/${id}`,
+    url: `/roles/${id}`,
     method: 'delete'
   });
 }

@@ -26,7 +26,7 @@ JobTap Admin Base 是一个基于 Vue 3 + Vite + NestJS 的中后台基础项目
 
 当前默认品牌为 `JobTap`。界面品牌、运行时品牌和客户交付相关的替换入口已经集中收敛，便于后续快速做客户化换标。
 
-当前数据库初始化流程已经统一为 `Prisma migration + Prisma seed`。`deploy/postgres` 下的 SQL 文件仅作为历史参考保留，不再通过 Docker 自动执行。
+当前数据库初始化流程已经统一为 `Prisma migration + Prisma seed`。仓库现已重建为单一 `0_target_state_baseline` 基线迁移；`deploy/postgres` 下的 SQL 文件仅作为历史参考保留，不再通过 Docker 自动执行。
 
 ## 项目结构
 
@@ -48,61 +48,37 @@ jobtap-admin-base/
 docker-compose -f docker-compose.middleware.yml up -d
 ```
 
-如果你的本地 PostgreSQL 数据卷之前已经通过 `deploy/postgres/*.sql` 自动初始化过，先清空旧卷再重新启动，否则执行 Prisma migration 时会遇到 `P3005`：
+如果你之前用旧迁移链或 `deploy/postgres/*.sql` 初始化过本地数据库，请先清空旧卷或重建数据库。当前仓库已经切换为单一基线迁移，旧库不建议原地复用。
 
 ```bash
 docker-compose -f docker-compose.middleware.yml down -v
 docker-compose -f docker-compose.middleware.yml up -d
 ```
 
-### 2. 安装后端依赖并初始化数据库
+### 2. 初始化后端数据库
 
 ```bash
 cd backend
 pnpm install
 pnpm prisma:generate
-```
-
-方式一：使用 `Makefile`
-
-```bash
-cd backend
-make init_migration
-```
-
-方式二：直接使用 Prisma 命令
-
-```bash
-cd backend
 pnpm exec prisma migrate deploy --schema prisma/schema.prisma
 pnpm exec prisma db seed
 ```
 
-如果后续修改了 `prisma/schema.prisma`，可以使用下面的命令维护迁移：
+说明：
 
-```bash
-cd backend
-make generate_migration
-make deploy_migration
-pnpm prisma:generate
-```
+- `migrate deploy` 会执行单一基线迁移 `prisma/migrations/0_target_state_baseline`
+- `db seed` 会初始化内置租户、角色模板、capability 与基础账号数据
+- 如果是全新环境，这是唯一推荐的初始化路径
 
-### 3. 使用完整 Docker Compose 启动整套服务
-
-```bash
-docker-compose up -d
-```
-
-完整 compose 会在 `postgres` 健康后由 `db-init` 自动执行 `pnpm exec prisma migrate deploy --schema prisma/schema.prisma` 和 `pnpm exec prisma db seed`，随后再启动 `backend`。
-
-### 4. 启动后端
+### 3. 启动后端
 
 ```bash
 cd backend
 pnpm start:dev
 ```
 
-### 5. 启动前端
+### 4. 启动前端
 
 ```bash
 cd frontend
@@ -110,11 +86,34 @@ pnpm install
 pnpm dev
 ```
 
+### 5. 使用完整 Docker Compose 启动整套服务
+
+```bash
+docker-compose up -d
+```
+
+完整 compose 会在 `postgres` 健康后由 `db-init` 自动执行 `pnpm exec prisma migrate deploy --schema prisma/schema.prisma` 和 `pnpm exec prisma db seed`，随后再启动 `backend`。
+
 ### 6. 访问地址
 
 - 前端：`http://localhost:9527`
 - 后端：`http://localhost:9528/v1`
 - Swagger：`http://127.0.0.1:9528/api-docs`
+
+### 7. 后续维护迁移
+
+结构变更后，不再使用“从空库重新生成全部 SQL”的方式维护迁移。请直接基于当前基线继续追加迁移：
+
+```bash
+cd backend
+pnpm exec prisma migrate dev --schema prisma/schema.prisma --name <change-name> --create-only
+pnpm exec prisma migrate deploy --schema prisma/schema.prisma
+pnpm prisma:generate
+```
+
+更完整的初始化和迁移说明见：
+
+- [docs/environment-bootstrap.md](./docs/environment-bootstrap.md)
 
 ## 底座使用
 

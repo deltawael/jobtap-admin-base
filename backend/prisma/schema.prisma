@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma schema
 
 generator client {
   provider        = "prisma-client-js"
@@ -36,12 +32,13 @@ model SysTokens {
   @@map("sys_tokens")
 }
 
-// 用户表
 model SysUser {
   id          String    @id
   username    String    @unique
   password    String
   domain      String
+  tenantId    String?   @map("tenant_id")
+  actorType   ActorType @default(tenant_user) @map("actor_type")
   built_in    Boolean   @default(false)
   avatar      String?
   email       String?   @unique
@@ -53,7 +50,14 @@ model SysUser {
   updatedAt   DateTime? @updatedAt @map("updated_at")
   updatedBy   String?   @map("updated_by")
 
+  @@index([tenantId])
   @@map("sys_user")
+}
+
+enum ActorType {
+  system_admin
+  tenant_admin
+  tenant_user
 }
 
 enum Status {
@@ -62,7 +66,6 @@ enum Status {
   BANNED
 }
 
-// casbin_rule
 model CasbinRule {
   id    Int     @id @default(autoincrement())
   ptype String
@@ -76,7 +79,6 @@ model CasbinRule {
   @@map("casbin_rule")
 }
 
-// domain 租户/域
 model SysDomain {
   id          String    @id
   code        String    @unique
@@ -91,11 +93,43 @@ model SysDomain {
   @@map("sys_domain")
 }
 
-// 角色表
+model Tenant {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  name        String
+  description String?
+  status      Status
+  createdAt   DateTime  @default(now()) @map("created_at")
+  createdBy   String    @map("created_by")
+  updatedAt   DateTime? @updatedAt @map("updated_at")
+  updatedBy   String?   @map("updated_by")
+
+  @@map("tenants")
+}
+
+model RoleTemplate {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  name        String
+  actorType   ActorType @map("actor_type")
+  description String?
+  status      Status
+  builtIn     Boolean   @default(true) @map("built_in")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  createdBy   String    @map("created_by")
+  updatedAt   DateTime? @updatedAt @map("updated_at")
+  updatedBy   String?   @map("updated_by")
+
+  @@map("role_templates")
+}
+
 model SysRole {
   id          String    @id
   code        String    @unique
   name        String
+  tenantId    String?   @map("tenant_id")
+  templateId  String?   @map("template_id")
+  builtIn     Boolean   @default(false) @map("built_in")
   description String?
   pid         String    @default("0")
   status      Status
@@ -104,7 +138,33 @@ model SysRole {
   updatedAt   DateTime? @updatedAt @map("updated_at")
   updatedBy   String?   @map("updated_by")
 
+  @@index([tenantId])
+  @@index([templateId])
   @@map("sys_role")
+}
+
+enum CapabilityKind {
+  action
+  view
+}
+
+enum ScopeType {
+  all
+  self
+  region
+  department
+  custom
+}
+
+enum DelegationStatus {
+  active
+  expired
+  revoked
+}
+
+enum PolicyEffect {
+  allow
+  deny
 }
 
 model SysUserRole {
@@ -115,7 +175,156 @@ model SysUserRole {
   @@map("sys_user_role")
 }
 
-// 接口资源表
+model Capability {
+  id          String         @id @default(cuid())
+  code        String         @unique
+  name        String
+  module      String
+  kind        CapabilityKind
+  description String?
+  status      Status
+  createdAt   DateTime       @default(now()) @map("created_at")
+  createdBy   String         @map("created_by")
+  updatedAt   DateTime?      @updatedAt @map("updated_at")
+  updatedBy   String?        @map("updated_by")
+
+  @@map("capabilities")
+}
+
+model RoleTemplateCapability {
+  templateId   String @map("template_id")
+  capabilityId String @map("capability_id")
+
+  @@id([templateId, capabilityId])
+  @@map("role_template_capabilities")
+}
+
+model RoleCapability {
+  roleId       String @map("role_id")
+  capabilityId String @map("capability_id")
+
+  @@id([roleId, capabilityId])
+  @@map("role_capabilities")
+}
+
+model ScopePolicy {
+  id           String       @id @default(cuid())
+  tenantId     String?      @map("tenant_id")
+  roleId       String?      @map("role_id")
+  capabilityId String       @map("capability_id")
+  scopeType    ScopeType    @map("scope_type")
+  scopeValue   String?      @map("scope_value")
+  effect       PolicyEffect @default(allow)
+  description  String?
+  createdAt    DateTime     @default(now()) @map("created_at")
+  createdBy    String       @map("created_by")
+  updatedAt    DateTime?    @updatedAt @map("updated_at")
+  updatedBy    String?      @map("updated_by")
+
+  @@index([tenantId, roleId])
+  @@map("scope_policies")
+}
+
+model UserScopeOverride {
+  id           String       @id @default(cuid())
+  userId       String       @map("user_id")
+  capabilityId String       @map("capability_id")
+  scopeType    ScopeType    @map("scope_type")
+  scopeValue   String?      @map("scope_value")
+  effect       PolicyEffect @default(allow)
+  startAt      DateTime?    @map("start_at")
+  endAt        DateTime?    @map("end_at")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  createdBy    String       @map("created_by")
+  updatedAt    DateTime?    @updatedAt @map("updated_at")
+  updatedBy    String?      @map("updated_by")
+
+  @@index([userId, capabilityId])
+  @@map("user_scope_overrides")
+}
+
+model Delegation {
+  id           String           @id @default(cuid())
+  tenantId     String           @map("tenant_id")
+  fromUserId   String           @map("from_user_id")
+  toUserId     String           @map("to_user_id")
+  capabilityId String           @map("capability_id")
+  scopeType    ScopeType        @map("scope_type")
+  scopeValue   String?          @map("scope_value")
+  status       DelegationStatus @default(active)
+  startAt      DateTime         @map("start_at")
+  endAt        DateTime         @map("end_at")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  createdBy    String           @map("created_by")
+  updatedAt    DateTime?        @updatedAt @map("updated_at")
+  updatedBy    String?          @map("updated_by")
+
+  @@index([tenantId, toUserId, capabilityId])
+  @@map("delegations")
+}
+
+model UserStaffBinding {
+  id        String    @id @default(cuid())
+  tenantId  String    @map("tenant_id")
+  userId    String    @unique @map("user_id")
+  staffId   String    @map("staff_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String    @map("created_by")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by")
+
+  @@index([tenantId, staffId])
+  @@map("user_staff_bindings")
+}
+
+model CapabilityUiBinding {
+  id           String    @id @default(cuid())
+  capabilityId String    @map("capability_id")
+  resourceType String    @map("resource_type")
+  resourceCode String    @map("resource_code")
+  menuId       Int?      @map("menu_id")
+  routeName    String?   @map("route_name")
+  buttonCode   String?   @map("button_code")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  createdBy    String    @map("created_by")
+  updatedAt    DateTime? @updatedAt @map("updated_at")
+  updatedBy    String?   @map("updated_by")
+
+  @@index([capabilityId, resourceType])
+  @@map("capability_ui_bindings")
+}
+
+model CapabilityApiBinding {
+  id           String    @id @default(cuid())
+  capabilityId String    @map("capability_id")
+  endpointId   String?   @map("endpoint_id")
+  resource     String
+  action       String
+  method       String?
+  path         String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  createdBy    String    @map("created_by")
+  updatedAt    DateTime? @updatedAt @map("updated_at")
+  updatedBy    String?   @map("updated_by")
+
+  @@index([capabilityId, resource, action])
+  @@map("capability_api_bindings")
+}
+
+model CapabilityViewBinding {
+  id           String    @id @default(cuid())
+  capabilityId String    @map("capability_id")
+  resourceType String    @map("resource_type")
+  viewKey      String    @map("view_key")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  createdBy    String    @map("created_by")
+  updatedAt    DateTime? @updatedAt @map("updated_at")
+  updatedBy    String?   @map("updated_by")
+
+  @@index([capabilityId, resourceType])
+  @@map("capability_view_bindings")
+}
+
 model SysEndpoint {
   id         String    @id
   path       String
@@ -130,7 +339,6 @@ model SysEndpoint {
   @@map("sys_endpoint")
 }
 
-// 组织机构
 model SysOrganization {
   id          String    @id
   code        String    @unique
@@ -190,6 +398,7 @@ model SysOperationLog {
 enum MenuType {
   directory
   menu
+  button
 }
 
 model SysMenu {
@@ -231,13 +440,29 @@ model SysRoleMenu {
   @@map("sys_role_menu")
 }
 
+model AuditLog {
+  id            String    @id @default(cuid())
+  tenantId      String?   @map("tenant_id")
+  actorUserId   String    @map("actor_user_id")
+  actorUsername String    @map("actor_username")
+  actorType     ActorType @map("actor_type")
+  action        String
+  resourceType  String    @map("resource_type")
+  resourceId    String?   @map("resource_id")
+  detail        Json?
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([tenantId, resourceType, createdAt])
+  @@map("audit_logs")
+}
+
 model SysAccessKey {
   id              String   @id @default(cuid())
   domain          String
   AccessKeyID     String   @unique @map("access_key_id")
   AccessKeySecret String   @unique @map("access_key_secret")
   status          Status
-  description String?
+  description     String?
   createdAt       DateTime @default(now()) @map("created_at")
   createdBy       String   @map("created_by")
 

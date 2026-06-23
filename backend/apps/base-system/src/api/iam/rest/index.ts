@@ -3,6 +3,7 @@ import { AuthorizationController } from './authorization.controller';
 import { DomainController } from './domain.controller';
 import { MenuController } from './menu.controller';
 import { RoleController } from './role.controller';
+import { TenantAuthzController } from './tenant-authz.controller';
 import { UserController } from './user.controller';
 
 export const Controllers = [
@@ -11,5 +12,6 @@ export const Controllers = [
   DomainController,
   MenuController,
   RoleController,
+  TenantAuthzController,
   UserController,
 ];

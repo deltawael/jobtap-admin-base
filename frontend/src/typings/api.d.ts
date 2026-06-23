@@ -62,6 +62,8 @@ declare namespace Api {
     interface UserInfo {
       userId: string;
       userName: string;
+      tenantId: string | null;
+      actorType: 'system_admin' | 'tenant_admin' | 'tenant_user';
       roles: string[];
       buttons: string[];
     }
@@ -101,6 +103,32 @@ declare namespace Api {
       code: string;
       /** role description */
       description: string;
+      tenantId: string | null;
+      templateId: string | null;
+      templateName: string | null;
+      templateCode: string | null;
+      capabilityIds: string[];
+      capabilityCount: number;
+      builtIn: boolean;
+    }>;
+
+    type RoleTemplate = Common.CommonRecord<{
+      code: string;
+      name: string;
+      actorType: 'system_admin' | 'tenant_admin' | 'tenant_user';
+      description: string | null;
+      builtIn: boolean;
+      capabilityIds: string[];
+    }>;
+
+    type CapabilityKind = 'action' | 'view';
+
+    type Capability = Common.CommonRecord<{
+      code: string;
+      name: string;
+      module: string;
+      kind: CapabilityKind;
+      description: string | null;
     }>;
 
     /** role menu */
@@ -142,6 +170,7 @@ declare namespace Api {
       password: string;
       /** domain */
       domain: string;
+      tenantId: string | null;
       /** avatar */
       avatar: string | null;
       /** user nick name */
