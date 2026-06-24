@@ -5,60 +5,33 @@
  */
 declare namespace Api {
   namespace Common {
-    /** common params of paginating */
     interface PaginatingCommonParams {
-      /** current page number */
       current: number;
-      /** page size */
       size: number;
-      /** total count */
       total: number;
     }
 
-    /** common params of paginating query list data */
     interface PaginatingQueryRecord<T = any> extends PaginatingCommonParams {
       records: T[];
     }
 
-    /** common search params of table */
     type CommonSearchParams = Pick<Common.PaginatingCommonParams, 'current' | 'size'>;
-
-    /**
-     * enable status
-     *
-     * - "ENABLED": enabled
-     * - "DISABLED": disabled
-     */
     type EnableStatus = 'ENABLED' | 'DISABLED';
-
-    /** common record */
     type CommonRecord<T = any> = {
-      /** record id */
       id: any;
-      /** record creator */
       createBy: string;
-      /** record create time */
       createTime: string;
-      /** record updater */
       updateBy: string;
-      /** record update time */
       updateTime: string;
-      /** record status */
       status: EnableStatus | null;
     } & T;
   }
 
-  /**
-   * namespace Auth
-   *
-   * backend api module: "auth"
-   */
   namespace Auth {
     interface LoginToken {
       token: string;
       refreshToken: string;
     }
-
     interface UserInfo {
       userId: string;
       userName: string;
@@ -69,49 +42,73 @@ declare namespace Api {
     }
   }
 
-  /**
-   * namespace Route
-   *
-   * backend api module: "route"
-   */
   namespace Route {
     type ElegantConstRoute = import('@elegant-router/types').ElegantConstRoute;
-
     interface MenuRoute extends ElegantConstRoute {
       id: string;
     }
-
     interface UserRoute {
       routes: MenuRoute[];
       home: import('@elegant-router/types').LastLevelRouteKey;
     }
   }
 
-  /**
-   * namespace SystemManage
-   *
-   * backend api module: "systemManage"
-   */
   namespace SystemManage {
     type CommonSearchParams = Pick<Common.PaginatingCommonParams, 'current' | 'size'>;
-
-    /** role */
+    type ScopeType = 'all' | 'self' | 'region' | 'department' | 'custom';
+    type PolicyEffect = 'allow' | 'deny';
+    type DelegationStatus = 'active' | 'expired' | 'revoked';
+    type CapabilityKind = 'action' | 'view';
+    type ScopePolicy = {
+      id?: string;
+      capabilityId: string;
+      scopeType: ScopeType;
+      scopeValue?: string | null;
+      effect?: PolicyEffect;
+      description?: string | null;
+    };
+    type ScopeOverride = {
+      id?: string;
+      capabilityId: string;
+      scopeType: ScopeType;
+      scopeValue?: string | null;
+      effect?: PolicyEffect;
+      startAt?: string | null;
+      endAt?: string | null;
+    };
+    type Delegation = {
+      id: string;
+      createBy: string;
+      createTime: string;
+      updateBy: string;
+      updateTime: string;
+      tenantId: string;
+      fromUserId: string;
+      toUserId: string;
+      capabilityId: string;
+      scopeType: ScopeType;
+      scopeValue?: string | null;
+      status: DelegationStatus;
+      startAt: string;
+      endAt: string;
+    };
+    type Tenant = Common.CommonRecord<{ code: string; name: string; description: string | null }>;
+    type TenantModel = Pick<Tenant, 'code' | 'name' | 'description'> & Partial<Pick<Tenant, 'status'>>;
     type Role = Common.CommonRecord<{
-      /** role name */
       name: string;
-      /** role code */
       code: string;
-      /** role description */
       description: string;
       tenantId: string | null;
+      tenantName?: string | null;
       templateId: string | null;
       templateName: string | null;
       templateCode: string | null;
       capabilityIds: string[];
       capabilityCount: number;
+      scopePolicies: ScopePolicy[];
+      scopePolicyCount: number;
       builtIn: boolean;
     }>;
-
     type RoleTemplate = Common.CommonRecord<{
       code: string;
       name: string;
@@ -119,105 +116,52 @@ declare namespace Api {
       description: string | null;
       builtIn: boolean;
       capabilityIds: string[];
+      capabilityCount: number;
     }>;
-
-    type CapabilityKind = 'action' | 'view';
-
     type Capability = Common.CommonRecord<{
       code: string;
       name: string;
       module: string;
       kind: CapabilityKind;
+      builtIn: boolean;
       description: string | null;
     }>;
-
-    /** role menu */
-    type RoleMenu = {
-      roleId: string;
-      routeIds: number[];
+    type UserAuthProfile = {
+      tenantId: string | null;
+      roles: Role[];
+      capabilities: Capability[];
+      scopes: ScopeOverride[];
+      delegations: Delegation[];
+      linkedStaffId: string | null;
+      roleIds: string[];
+      scopeOverrides: ScopeOverride[];
     };
-
-    /** role menu */
-    type RolePermission = {
-      roleId: string;
-      permissions: string[];
-    };
-
-    /** role search params */
+    type RoleMenu = { roleId: string; routeIds: number[] };
+    type RolePermission = { roleId: string; permissions: string[] };
     type RoleSearchParams = CommonType.RecordNullable<
       Pick<Api.SystemManage.Role, 'name' | 'code' | 'status'> & CommonSearchParams
     >;
-
-    /** role list */
     type RoleList = Common.PaginatingQueryRecord<Role>;
-
-    /** all role */
     type AllRole = Pick<Role, 'id' | 'name' | 'code'>;
-
-    /**
-     * user gender
-     *
-     * - "1": "male"
-     * - "2": "female"
-     */
     type UserGender = '1' | '2';
-
-    /** user */
     type User = Common.CommonRecord<{
-      /** user name */
       username: string;
-      /** password */
       password: string;
-      /** domain */
       domain: string;
       tenantId: string | null;
-      /** avatar */
       avatar: string | null;
-      /** user nick name */
       nickName: string;
-      /** user phone */
       phoneNumber: string | null;
-      /** user email */
       email: string | null;
-      /** role ids */
       roleIds: string[];
     }>;
-
-    /** user search params */
     type UserSearchParams = CommonType.RecordNullable<
       Pick<Api.SystemManage.User, 'username' | 'nickName' | 'phoneNumber' | 'email' | 'status'> & CommonSearchParams
     >;
-
-    /** user list */
     type UserList = Common.PaginatingQueryRecord<User>;
-
-    /**
-     * menu type
-     *
-     * - "DIRECTORY": directory
-     * - "MENU": menu
-     */
-    type MenuType = 'directory' | 'menu';
-
-    type MenuButton = {
-      /**
-       * button code
-       *
-       * it can be used to control the button permission
-       */
-      code: string;
-      /** button description */
-      desc: string;
-    };
-
-    /**
-     * icon type
-     *
-     * - "1": iconify icon
-     * - "2": local icon
-     */
+    type MenuType = 'directory' | 'menu' | 'button';
+    type MenuButton = { code: string; desc: string };
     type IconType = 1 | 2;
-
     type MenuPropsOfRoute = Pick<
       import('vue-router').RouteMeta,
       | 'i18nKey'
@@ -231,41 +175,21 @@ declare namespace Api {
       | 'fixedIndexInTab'
       | 'query'
     >;
-
     type Menu = Common.CommonRecord<{
-      /** parent menu id */
       pid: number;
-      /** menu type */
       menuType: MenuType;
-      /** menu name */
       menuName: string;
-      /** route name */
       routeName: string;
-      /** route path */
       routePath: string;
-      /** component */
       component?: string;
-      /** iconify icon name or local icon name */
       icon: string;
-      /** icon type */
       iconType: IconType;
-      /** buttons */
       buttons?: MenuButton[] | null;
-      /** children menu */
       children?: Menu[] | null;
     }> &
       MenuPropsOfRoute;
-
-    /** menu list */
     type MenuList = Common.PaginatingQueryRecord<Menu>;
-
-    type MenuTree = {
-      id: number;
-      label: string;
-      pid: number;
-      children?: MenuTree[];
-    };
-
+    type MenuTree = { id: number; label: string; pid: number; children?: MenuTree[] };
     type ApiEndpoint = Common.CommonRecord<{
       path: string;
       method: string;
@@ -275,11 +199,20 @@ declare namespace Api {
       summary: string | null;
       children?: ApiEndpoint[] | null;
     }>;
-
-    type ApiEndpointTree = {
-      id: string;
-      label: string;
-      children?: ApiEndpointTree[];
-    };
+    type ApiEndpointTree = { id: string; label: string; children?: ApiEndpointTree[] };
+    type AuditLog = Common.CommonRecord<{
+      tenantId: string | null;
+      actorUserId: string;
+      actorUsername: string;
+      actorType: 'system_admin' | 'tenant_admin' | 'tenant_user';
+      action: string;
+      resourceType: string;
+      resourceId: string | null;
+      detail: Record<string, any> | null;
+    }>;
+    type AuditLogSearchParams = CommonType.RecordNullable<
+      Pick<AuditLog, 'tenantId' | 'resourceType'> & { action?: string | null } & CommonSearchParams
+    >;
+    type AuditLogList = Common.PaginatingQueryRecord<AuditLog>;
   }
 }

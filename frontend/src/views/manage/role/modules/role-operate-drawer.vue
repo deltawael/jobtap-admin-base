@@ -6,9 +6,7 @@ import { createRole, fetchGetCapabilities, fetchGetRoleTemplates, updateRole } f
 import { useFormRules, useNaiveForm } from '@/hooks/common/form';
 import { $t } from '@/locales';
 
-defineOptions({
-  name: 'RoleOperateDrawer'
-});
+defineOptions({ name: 'RoleOperateDrawer' });
 
 interface Props {
   operateType: NaiveUI.TableOperateType;
@@ -16,57 +14,33 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-
-interface Emits {
-  (e: 'submitted'): void;
-}
-
-const emit = defineEmits<Emits>();
-
-const visible = defineModel<boolean>('visible', {
-  default: false
-});
-
+const emit = defineEmits<{ (e: 'submitted'): void }>();
+const visible = defineModel<boolean>('visible', { default: false });
 const { formRef, validate, restoreValidation } = useNaiveForm();
 const { defaultRequiredRule } = useFormRules();
-
-const title = computed(() => {
-  const titles: Record<NaiveUI.TableOperateType, string> = {
-    add: $t('page.manage.role.addRole'),
-    edit: $t('page.manage.role.editRole')
-  };
-  return titles[props.operateType];
-});
-
+const title = computed(() => ({ add: '新增角色', edit: '编辑角色' })[props.operateType]);
 const loading = ref(false);
 const templateOptions = ref<CommonType.Option<string>[]>([]);
 const capabilityOptions = ref<CommonType.Option<string>[]>([]);
 const templateCapabilityMap = ref<Record<string, string[]>>({});
-
 const model: RoleModel = reactive(createDefaultModel());
 
 function createDefaultModel(): RoleModel {
-  return {
-    name: '',
-    code: '',
-    description: '',
-    status: null,
-    templateId: null,
-    capabilityIds: []
-  };
+  return { name: '', code: '', description: '', status: null, templateId: null, capabilityIds: [], scopePolicies: [] };
 }
 
-type RuleKey = Exclude<keyof RoleModel, 'description' | 'templateId' | 'capabilityIds' | 'id'>;
-
-const rules: Record<RuleKey, App.Global.FormRule> = {
+const rules: Record<'name' | 'code' | 'status', App.Global.FormRule> = {
   name: defaultRequiredRule,
   code: defaultRequiredRule,
   status: defaultRequiredRule
 };
 
+function createScopePolicy(): Api.SystemManage.ScopePolicy {
+  return { capabilityId: '', scopeType: 'all', scopeValue: null, effect: 'allow', description: null };
+}
+
 function handleInitModel() {
   Object.assign(model, createDefaultModel());
-
   if (props.operateType === 'edit' && props.rowData) {
     Object.assign(model, {
       id: props.rowData.id,
@@ -75,7 +49,8 @@ function handleInitModel() {
       description: props.rowData.description,
       status: props.rowData.status,
       templateId: props.rowData.templateId,
-      capabilityIds: props.rowData.capabilityIds || []
+      capabilityIds: props.rowData.capabilityIds || [],
+      scopePolicies: props.rowData.scopePolicies || []
     });
   }
 }
@@ -88,13 +63,11 @@ async function loadOptions() {
   loading.value = true;
   const [{ data: templates }, { data: capabilities }] = await Promise.all([
     fetchGetRoleTemplates(),
-    fetchGetCapabilities()
+    fetchGetCapabilities({ module: 'tenant' })
   ]);
-
-  templateOptions.value = (templates || []).map(item => ({
-    label: `${item.name} (${item.code})`,
-    value: item.id
-  }));
+  templateOptions.value = (templates || [])
+    .filter(item => item.actorType !== 'system_admin')
+    .map(item => ({ label: `${item.name} (${item.code})`, value: item.id }));
   templateCapabilityMap.value = Object.fromEntries((templates || []).map(item => [item.id, item.capabilityIds || []]));
   capabilityOptions.value = (capabilities || []).map(item => ({
     label: `${item.module} / ${item.name} (${item.code})`,
@@ -109,9 +82,16 @@ function handleTemplateChange(value: string | null) {
   model.capabilityIds = Array.from(new Set([...(model.capabilityIds || []), ...templateCapabilities]));
 }
 
+function handleAddScopePolicy() {
+  model.scopePolicies = [...(model.scopePolicies || []), createScopePolicy()];
+}
+
+function handleRemoveScopePolicy(index: number) {
+  model.scopePolicies = (model.scopePolicies || []).filter((_, idx) => idx !== index);
+}
+
 async function handleSubmit() {
   await validate();
-
   if (props.operateType === 'add') {
     const { error } = await createRole(model);
     if (error) return;
@@ -121,7 +101,6 @@ async function handleSubmit() {
     if (error) return;
     window.$message?.success($t('common.updateSuccess'));
   }
-
   closeDrawer();
   emit('submitted');
 }
@@ -136,15 +115,15 @@ watch(visible, async value => {
 </script>
 
 <template>
-  <NDrawer v-model:show="visible" display-directive="show" :width="420">
+  <NDrawer v-model:show="visible" display-directive="show" :width="520">
     <NDrawerContent :title="title" :native-scrollbar="false" closable>
       <NSpin :show="loading">
         <NForm ref="formRef" :model="model" :rules="rules">
-          <NFormItem :label="$t('page.manage.role.roleName')" path="name">
-            <NInput v-model:value="model.name" :placeholder="$t('page.manage.role.form.roleName')" />
+          <NFormItem label="角色名称" path="name">
+            <NInput v-model:value="model.name" placeholder="请输入角色名称" />
           </NFormItem>
-          <NFormItem :label="$t('page.manage.role.roleCode')" path="code">
-            <NInput v-model:value="model.code" :placeholder="$t('page.manage.role.form.roleCode')" />
+          <NFormItem label="角色编码" path="code">
+            <NInput v-model:value="model.code" placeholder="请输入角色编码" />
           </NFormItem>
           <NFormItem label="模板" path="templateId">
             <NSelect
@@ -164,6 +143,47 @@ watch(visible, async value => {
               :options="capabilityOptions"
               placeholder="请选择能力"
             />
+          </NFormItem>
+          <NFormItem label="Scope配置">
+            <div class="w-full flex-col gap-12px">
+              <NButton type="primary" dashed @click="handleAddScopePolicy">新增Scope规则</NButton>
+              <div
+                v-for="(item, index) in model.scopePolicies || []"
+                :key="index"
+                class="border border-[#e5e7eb] rounded-8px p-12px"
+              >
+                <NSpace vertical>
+                  <NSelect
+                    v-model:value="item.capabilityId"
+                    filterable
+                    :options="capabilityOptions"
+                    placeholder="选择能力"
+                  />
+                  <NSelect
+                    v-model:value="item.scopeType"
+                    :options="[
+                      { label: '全部', value: 'all' },
+                      { label: '本人', value: 'self' },
+                      { label: '区域', value: 'region' },
+                      { label: '部门', value: 'department' },
+                      { label: '自定义', value: 'custom' }
+                    ]"
+                    placeholder="选择Scope类型"
+                  />
+                  <NInput v-model:value="item.scopeValue" placeholder="Scope值，可为空" />
+                  <NSelect
+                    v-model:value="item.effect"
+                    :options="[
+                      { label: '允许', value: 'allow' },
+                      { label: '拒绝', value: 'deny' }
+                    ]"
+                    placeholder="选择效果"
+                  />
+                  <NInput v-model:value="item.description" placeholder="规则说明" />
+                  <NButton type="error" text @click="handleRemoveScopePolicy(index)">删除规则</NButton>
+                </NSpace>
+              </div>
+            </div>
           </NFormItem>
           <NFormItem :label="$t('page.manage.role.roleStatus')" path="status">
             <NRadioGroup v-model:value="model.status">

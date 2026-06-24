@@ -6,6 +6,7 @@ CREATE TYPE "Status" AS ENUM ('ENABLED', 'DISABLED', 'BANNED');
 
 -- CreateEnum
 CREATE TYPE "CapabilityKind" AS ENUM ('action', 'view');
+CREATE TYPE "CapabilityBindingMode" AS ENUM ('ANY_OF', 'ALL_OF');
 
 -- CreateEnum
 CREATE TYPE "ScopeType" AS ENUM ('all', 'self', 'region', 'department', 'custom');
@@ -158,6 +159,7 @@ CREATE TABLE "capabilities" (
     "name" TEXT NOT NULL,
     "module" TEXT NOT NULL,
     "kind" "CapabilityKind" NOT NULL,
+    "built_in" BOOLEAN NOT NULL DEFAULT true,
     "description" TEXT,
     "status" "Status" NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -278,6 +280,7 @@ CREATE TABLE "capability_api_bindings" (
     "endpoint_id" TEXT,
     "resource" TEXT NOT NULL,
     "action" TEXT NOT NULL,
+    "binding_mode" "CapabilityBindingMode" NOT NULL DEFAULT 'ANY_OF',
     "method" TEXT,
     "path" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

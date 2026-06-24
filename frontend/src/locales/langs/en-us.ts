@@ -172,6 +172,14 @@ const local: App.I18n.Schema = {
     'manage_user-detail': 'User Detail',
     manage_role: 'Role Manage',
     manage_menu: 'Menu Manage',
+    platform: 'Platform Manage',
+    platform_tenant: 'Tenant Manage',
+    'platform_role-template': 'Role Templates',
+    platform_capability: 'Capability Catalog',
+    platform_audit: 'Platform Audit',
+    tenant: 'Tenant Manage',
+    'tenant_user-auth-profile': 'User Auth Profile',
+    tenant_audit: 'Tenant Audit',
     'access-key': 'AccessKey',
     log: 'Log',
     log_login: 'Login Log',
@@ -337,7 +345,8 @@ const local: App.I18n.Schema = {
         addChildMenu: 'Add Child Menu',
         type: {
           directory: 'Directory',
-          menu: 'Menu'
+          menu: 'Menu',
+          button: 'Button'
         },
         iconType: {
           iconify: 'Iconify Icon',

@@ -1,215 +1,143 @@
-# 底座使用指南
+# 底座目标态说明
 
-## 1. 项目定位
+## 1. 目标态原则
 
-`JobTap Admin Base` 用作后续客户化交付的后台底座，目标不是保留模板的所有演示能力，而是提供一套可继续扩展的前后端基础框架。
+当前底座以“多租户 + 统一授权中心”为核心，约束如下：
 
-当前仓库已经完成的收敛工作包括：
+- 继续采用 `tenant` 术语，不再把 `domain` 作为业务主语义。
+- 采用 `单库共享表 + tenant_id 强隔离`。
+- capability 是唯一主授权源。
+- 菜单、按钮、接口、视图块都通过 capability 投影，不再让角色直接绑定菜单或 API。
 
-- 品牌文案和 LOGO 替换入口集中化
-- 数据库初始化统一为 `Prisma migration + Prisma seed`
-- 登录空壳能力收口为密码登录体验
-- 用户管理完成一轮“可用化”改造，支持头像、角色和租户域继承规则
+## 2. 平台侧与租户侧边界
 
-## 2. 目录说明
+### 2.1 平台侧
 
-```text
-jobtap-admin-base/
-├── frontend/   前端管理后台，Vue 3 + Vite
-├── backend/    后端服务，NestJS + Prisma
-├── deploy/     历史 SQL 快照与部署参考
-├── docs/       项目文档与客户化说明
-├── docker-compose.yml
-└── docker-compose.middleware.yml
-```
+平台级资源包括：
 
-推荐阅读顺序：
+- 租户
+- 角色模板
+- 能力目录
+- 资源目录
+- 平台审计
+- 系统配置
 
-1. 根目录 [README.md](../README.md)
-2. 本文档
-3. [customer-branding.md](./customer-branding.md)
-4. [removable-unimplemented-features.md](./removable-unimplemented-features.md)
+平台管理员能力重点是“维护标准”，而不是天然拥有任意租户业务数据可见权。
 
-## 3. 已有可用功能
+### 2.2 租户侧
 
-以下能力当前视为底座内置能力，可在后续项目中直接沿用或二次扩展。
+租户级资源包括：
 
-### 3.1 认证与基础框架
+- 用户
+- 租户角色
+- 用户授权档案
+- scope override
+- delegation
+- 租户审计
+- 各类业务数据
 
-- 密码登录
-- 403 / 404 / 500 异常页
-- 基于用户路由的菜单装配
-- 中英文切换
-- 主题配置、页签、布局切换
+租户管理员只管理本租户，不可跨租户操作。
+
+## 3. 固定菜单结构
+
+### 3.1 平台管理
+
+- `平台管理 / 租户管理`
+- `平台管理 / 角色模板`
+- `平台管理 / 能力目录`
+- `平台管理 / 资源目录`
+- `平台管理 / 平台审计`
+
+### 3.2 租户管理
+
+- `租户管理 / 用户管理`
+- `租户管理 / 角色管理`
+- `租户管理 / 用户授权档案`
+- `租户管理 / 租户审计`
 
 说明：
-旧的 `/login/:module(...)` 路由兼容仍保留，但产品能力已经收口到密码登录；`code-login`、`register`、`reset-pwd`、`bind-wechat` 不应再当作可用业务功能继续建设。
 
-### 3.2 当前菜单内模块
+- `资源目录` 负责维护菜单、按钮、页面视图、接口元数据。
+- `资源目录` 不是主授权模型，只是 capability 的投影目录。
+- 角色页不再展示“菜单权限 / API 权限”，只展示角色基础信息、能力配置、scope 配置。
 
-当前种子菜单里已经暴露的模块包括：
+## 4. 角色模板与角色实例
 
-- 首页 `home`
-- 用户管理 `manage/user`
-- 角色管理 `manage/role`
-- 菜单管理 `manage/menu`
-- Access Key `access-key`
-- 登录日志 `log/login`
-- 操作日志 `log/operation`
+平台预置模板：
 
-这些模块里，用户 / 角色 / 菜单管理和日志模块可作为基础权限后台继续使用；首页和部分展示卡片仍带演示属性，后续可按客户要求精简。
+- `system_admin`
+- `tenant_admin`
+- `boss`
+- `manager`
+- `staff`
+- `readonly`
 
-### 3.3 用户管理当前规则
+约束：
 
-用户管理是当前底座里已经做过业务收口的模块，后续扩展请遵守以下约束：
+- `system_admin` 负责平台标准治理。
+- `tenant_admin` 负责租户内用户、角色、授权档案和租户审计。
+- `boss` 是否能看敏感数据，不由模板名决定，只由 `view capability` 决定。
+- `manager` 代表通用管理层模板，默认与 scope 联动。
+- `readonly` 默认只有被授予模块的只读能力。
 
-- 前端列表和表单不展示 `domain`
-- 创建用户时 `domain` 由后端继承当前登录操作者的 `req.user.domain`
-- 用户表单内直接维护 `roleIds`
-- 角色为必填，至少选择一个
-- 头像为空时前端使用 fallback 展示，不依赖远程默认图
+## 5. 能力目录、资源目录、授权档案
 
-如果后续再扩展用户资料字段，应优先沿用这套“前端最少暴露、后端兜底继承”的模式。
+### 5.1 能力目录
 
-## 4. 初始化与运行规则
+能力目录维护业务意图能力，例如：
 
-完整启动步骤以根目录 [README.md](../README.md) 为准，这里只强调底座规则：
+- `tenant.role.read`
+- `tenant.role.manage`
+- `tenant.user.read`
+- `tenant.user.manage`
+- `tenant.user.sensitive_view`
 
-### 4.1 中间件启动
+### 5.2 资源目录
 
-- 本地中间件使用 `docker-compose.middleware.yml`
-- 完整联调用 `docker-compose.yml`
+资源目录维护：
 
-### 4.2 数据库初始化
+- 菜单资源
+- 按钮资源
+- 页面视图资源
+- API 资源
 
-统一使用 Prisma：
+这些资源允许绑定 capability，但不允许反过来成为主授权源。
 
-- 结构来源：`backend/prisma/migrations/0_target_state_baseline`
-- 初始数据来源：`backend/prisma/seeds`
+### 5.3 用户授权档案
 
-当前仓库已经把旧迁移链压成单一 0 基线。
+用户授权档案聚合展示：
 
-含义是：
+- 角色继承能力
+- 直接 scope override
+- delegation
+- 可见 view capability
+- 关联员工
 
-- 新环境直接执行 `prisma migrate deploy` 即可完成建表
-- 旧环境如果来自历史迁移链或 `deploy/postgres/*.sql`，建议重置数据库，不再保证原地升级
+## 6. 统一授权中心
 
-`deploy/postgres` 下的 SQL 仅作为历史参考保留，不再作为当前推荐初始化路径。
+统一授权服务对外只保留三类决策：
 
-### 4.3 迁移与种子原则
+- `can(user, capability, resource, context)`
+- `allowedScope(user, capability, context)`
+- `visibleViews(user, resourceType, context)`
 
-- 新增表结构：基于当前基线继续追加 Prisma migration
-- 新增基础数据：优先补 seed
-- 不要再把新的初始化逻辑写回 `deploy/postgres/*.sql` 当作主流程
-- 不要为普通变更重新生成全量 baseline；只有在明确要 squash 历史时才重建 baseline
+接口绑定基线支持：
 
-推荐流程：
+- `ANY_OF`
+- `ALL_OF`
 
-```bash
-cd backend
-pnpm exec prisma migrate dev --schema prisma/schema.prisma --name <change-name> --create-only
-pnpm exec prisma migrate deploy --schema prisma/schema.prisma
-pnpm prisma:generate
-```
+用途：
 
-## 5. 后续项目接入建议
+- `ANY_OF`：共享引用类读取接口，满足任一能力即可访问。
+- `ALL_OF`：高风险动作的组合校验，必须同时满足多个能力。
 
-拿这个仓库做新项目底座时，建议按下面顺序处理。
+## 7. 当前开发约束
 
-### 5.1 第一阶段：先确认要保留的基础能力
+- 新模块不得继续沿用“角色 -> 菜单 -> API”老配置方式。
+- 任意租户内业务表都必须带 `tenant_id`。
+- 任意租户内查询默认必须注入 `tenant_id`。
+- 新模块上线前必须完成 capability 清单、资源映射清单、模板映射清单。
 
-建议先明确：
+更细的授权接入规则见：
 
-- 是否保留首页演示内容
-- 是否保留 `access-key`
-- 是否保留日志模块
-- 是否需要继续沿用当前 RBAC 菜单/角色模型
-
-如果只是做标准管理后台，通常保留用户、角色、菜单、日志即可，其余演示内容按项目再裁剪。
-
-### 5.2 第二阶段：完成客户化基础替换
-
-优先处理：
-
-- 品牌名、系统标题、页脚、水印
-- `logo.png`、`favicon.svg`、`favicon.ico`
-- Swagger 品牌信息
-- 默认种子超管展示名
-
-具体入口见 [customer-branding.md](./customer-branding.md)。
-
-### 5.3 第三阶段：接入业务模块
-
-建议按照“前端页面 + 后端 DTO/Command/Query/Repository + 种子菜单/权限”的完整链路接入，而不是只补页面。
-
-推荐最小落地顺序：
-
-1. 后端定义 DTO、命令、查询和仓储接口
-2. 后端补控制器与 Prisma 持久化
-3. 前端补 API typing 和 service
-4. 前端补页面、表单、搜索和 i18n
-5. 如需菜单可见，再补菜单种子和权限规则
-
-## 6. 质量检查与提交流程
-
-### 6.1 常用检查命令
-
-前端：
-
-```bash
-cd frontend
-pnpm typecheck
-pnpm exec eslint --fix src
-```
-
-后端：
-
-```bash
-cd backend
-pnpm exec tsc -p tsconfig.build.json --noEmit
-```
-
-### 6.2 提交前注意事项
-
-前端 `pre-commit` 会执行：
-
-- `pnpm typecheck`
-- `pnpm lint-staged`
-
-而 `lint-staged` 当前配置是：
-
-- `* -> eslint --fix`
-
-这意味着：
-
-- 任何已暂存前端文件都会被 `eslint --fix` 扫到
-- 如果生成文件有本地改动但未暂存，`lint-staged` 回滚失败时容易造成工作区混乱
-
-特别注意 `frontend/src/typings/components.d.ts`：
-
-- 它是 `unplugin-vue-components` 生成文件
-- 当页面新用了 `NAvatar` 等自动注册组件时，这个文件会变化
-- 如果它变化了，应与业务代码一起提交，不要单独留成未暂存修改
-
-## 7. 已知边界与保留项
-
-当前有几类内容是“故意保留，但不等于业务完成态”：
-
-- 首页的部分统计卡片、新闻流和展示内容仍偏演示
-- 历史 SQL 文件仍保留在 `deploy/postgres`，但不是推荐主流程
-- 登录兼容路由仍保留旧模块字面量，只用于兼容历史地址
-- 依赖名如 `@soybeanjs/*` 属于上游技术标识，不属于业务品牌范围
-
-如果未来目标从“可交付底座”变成“最小化后台骨架”，建议单独开一轮继续清理，而不要和正常业务迭代混在一起。
-
-## 8. 推荐维护方式
-
-建议把这个仓库当作“内部基础版本”维护，而不是一次性模板包：
-
-- 底层规范变更尽量先回到这个仓库沉淀
-- 客户项目只做客户特有业务和配置差异
-- 通用能力优化优先反哺到底座
-
-这样后续新项目启动时，才不会每次都从旧模板重新清理一遍。
-
-
+- [authz-module-onboarding.md](./authz-module-onboarding.md)

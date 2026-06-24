@@ -1,57 +1,53 @@
 # JobTap Admin Base
 
-JobTap Admin Base 是一个基于 Vue 3 + Vite + NestJS 的中后台基础项目，面向后续客户化交付场景，已经完成品牌配置与资源替换的集中化整理。
+`JobTap Admin Base` 已切换到“目标态优先”的多租户与统一授权中心基线。
 
-## 在线预览
+当前仓库的核心约束：
 
-- 预览地址：请在本地启动后访问 `http://localhost:9527`
+- 统一术语：`domain -> tenant`
+- 多租户模型：`单库共享表 + tenant_id 强隔离`
+- 授权主模型：`capability + scope + delegation`
+- 菜单、按钮、接口、视图块都只是 capability 的投影
+- 不再保留旧的“角色直配菜单 / 角色直配 API”作为主授权模型
+- 数据库基线统一为 `backend/prisma/migrations/0_target_state_baseline`
 
-## 文档导航
+## 当前目标态
 
-- [简介](#简介)
-- [项目结构](#项目结构)
-- [快速开始](#快速开始)
-- [底座使用](#底座使用)
-- [品牌定制](#品牌定制)
-- [技术栈](#技术栈)
+平台侧内置能力：
 
-## 简介
+- 租户管理
+- 角色模板管理
+- 能力目录管理
+- 资源目录管理
+- 平台审计
 
-本项目采用 monorepo 结构，包含：
+租户侧内置能力：
 
-- `frontend`：前端管理后台
-- `backend`：NestJS 后端服务
-- `deploy`：历史 SQL 快照与部署辅助资源
-- `docs`：项目文档与客户定制说明
+- 用户管理
+- 角色管理
+- 用户授权档案
+- 租户审计
 
-当前默认品牌为 `JobTap`。界面品牌、运行时品牌和客户交付相关的替换入口已经集中收敛，便于后续快速做客户化换标。
+平台预置角色模板：
 
-当前数据库初始化流程已经统一为 `Prisma migration + Prisma seed`。仓库现已重建为单一 `0_target_state_baseline` 基线迁移；`deploy/postgres` 下的 SQL 文件仅作为历史参考保留，不再通过 Docker 自动执行。
+- `system_admin`
+- `tenant_admin`
+- `boss`
+- `manager`
+- `staff`
+- `readonly`
 
-## 项目结构
+新环境初始化后只创建 3 个管理员账号：
 
-```text
-jobtap-admin-base/
-├── backend/
-├── frontend/
-├── deploy/
-├── docs/
-├── docker-compose.yml
-└── docker-compose.middleware.yml
-```
+- `system_admin`
+- `tenant_admin_a`
+- `tenant_admin_b`
 
 ## 快速开始
 
 ### 1. 启动中间件
 
 ```bash
-docker-compose -f docker-compose.middleware.yml up -d
-```
-
-如果你之前用旧迁移链或 `deploy/postgres/*.sql` 初始化过本地数据库，请先清空旧卷或重建数据库。当前仓库已经切换为单一基线迁移，旧库不建议原地复用。
-
-```bash
-docker-compose -f docker-compose.middleware.yml down -v
 docker-compose -f docker-compose.middleware.yml up -d
 ```
 
@@ -64,12 +60,6 @@ pnpm prisma:generate
 pnpm exec prisma migrate deploy --schema prisma/schema.prisma
 pnpm exec prisma db seed
 ```
-
-说明：
-
-- `migrate deploy` 会执行单一基线迁移 `prisma/migrations/0_target_state_baseline`
-- `db seed` 会初始化内置租户、角色模板、capability 与基础账号数据
-- 如果是全新环境，这是唯一推荐的初始化路径
 
 ### 3. 启动后端
 
@@ -86,66 +76,38 @@ pnpm install
 pnpm dev
 ```
 
-### 5. 使用完整 Docker Compose 启动整套服务
-
-```bash
-docker-compose up -d
-```
-
-完整 compose 会在 `postgres` 健康后由 `db-init` 自动执行 `pnpm exec prisma migrate deploy --schema prisma/schema.prisma` 和 `pnpm exec prisma db seed`，随后再启动 `backend`。
-
-### 6. 访问地址
+### 5. 访问地址
 
 - 前端：`http://localhost:9527`
 - 后端：`http://localhost:9528/v1`
 - Swagger：`http://127.0.0.1:9528/api-docs`
 
-### 7. 后续维护迁移
+## 验证命令
 
-结构变更后，不再使用“从空库重新生成全部 SQL”的方式维护迁移。请直接基于当前基线继续追加迁移：
+前端：
+
+```bash
+cd frontend
+pnpm typecheck
+```
+
+后端：
 
 ```bash
 cd backend
-pnpm exec prisma migrate dev --schema prisma/schema.prisma --name <change-name> --create-only
-pnpm exec prisma migrate deploy --schema prisma/schema.prisma
 pnpm prisma:generate
+pnpm build
 ```
 
-更完整的初始化和迁移说明见：
+## 文档导航
 
-- [docs/environment-bootstrap.md](./docs/environment-bootstrap.md)
-
-## 底座使用
-
-作为后续项目底座的使用说明见：
-
-- [docs/base-project-guide.md](./docs/base-project-guide.md)
-
-## 品牌定制
-
-客户定制说明见：
-
-- [docs/customer-branding.md](./docs/customer-branding.md)
-
-## 技术栈
-
-### 前端
-
-- Vue 3
-- Vite 6
-- TypeScript
-- Pinia
-- UnoCSS
-
-### 后端
-
-- NestJS
-- Prisma
-- PostgreSQL
-- Redis
-- TypeScript
+- [环境初始化与基线](./docs/environment-bootstrap.md)
+- [底座目标态说明](./docs/base-project-guide.md)
+- [统一授权接入规范](./docs/authz-module-onboarding.md)
+- [品牌定制说明](./docs/customer-branding.md)
 
 ## 说明
 
-- 当前仓库已经完成主要品牌入口的集中化改造。
-- 真实上游依赖名和部分外部工具链接仍会保留，例如 `@soybeanjs/*`，因为这些是实际依赖来源，不属于业务品牌展示范围。
+- 旧历史 SQL 仅保留在 `deploy/` 作为参考，不再是推荐初始化路径。
+- 普通结构变更请在当前基线之上继续追加 Prisma migration，不要重复重建全量 baseline。
+- 初始化账号的默认密码明文不在文档中固化；种子使用统一初始密码哈希，部署前应替换种子中的默认哈希，或初始化后立即重置管理员密码。

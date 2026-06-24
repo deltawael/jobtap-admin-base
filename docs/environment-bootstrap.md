@@ -1,103 +1,125 @@
 # Environment Bootstrap
 
-## Scope
+## 1. 基线范围
 
-This repository now uses a single Prisma baseline migration:
+当前仓库使用单一目标态基线迁移：
 
 - `backend/prisma/migrations/0_target_state_baseline`
 
-It represents the current target-state schema, including:
+这条基线已经包含：
 
-- shared-table multi-tenant fields (`tenantId`)
-- unified authorization catalog (`capabilities`)
-- role templates and tenant roles
-- scope, delegation, and audit tables
+- `tenant` 术语与多租户字段
+- `capabilities / role_templates / roles / user_roles`
+- `scope_policies / user_scope_overrides / delegations`
+- `capability_ui_bindings / capability_api_bindings / capability_view_bindings`
+- `audit_logs`
+- 资源目录支持 `directory / menu / button`
 
-The old migration chain has been removed intentionally. Existing databases initialized from older migration chains should be reset instead of being upgraded in place.
+旧迁移链和旧 SQL 初始化路径不再作为当前推荐方案。
 
-## New Environment Initialization
+## 2. 新环境初始化
 
-### Option A: Full Docker Compose
-
-From the repository root:
-
-```bash
-docker-compose up -d
-```
-
-Startup order:
-
-1. `postgres`
-2. `redis`
-3. `db-init`
-4. `backend`
-5. `frontend`
-
-`db-init` runs:
-
-```bash
-pnpm exec prisma migrate deploy --schema prisma/schema.prisma
-pnpm exec prisma db seed
-```
-
-### Option B: Local Development
-
-Start middleware first:
+### 2.1 本地开发
 
 ```bash
 docker-compose -f docker-compose.middleware.yml up -d
-```
 
-Then initialize the backend database:
-
-```bash
 cd backend
 pnpm install
 pnpm prisma:generate
 pnpm exec prisma migrate deploy --schema prisma/schema.prisma
 pnpm exec prisma db seed
-```
-
-Start the backend:
-
-```bash
-cd backend
 pnpm start:dev
-```
 
-Start the frontend:
-
-```bash
-cd frontend
+cd ../frontend
 pnpm install
 pnpm dev
 ```
 
-## Reset Rules
-
-If a local PostgreSQL volume or database was created from any previous migration chain or from `deploy/postgres/*.sql`, reset it before using the current repository state.
-
-Example:
+### 2.2 完整 Docker Compose
 
 ```bash
-docker-compose -f docker-compose.middleware.yml down -v
-docker-compose -f docker-compose.middleware.yml up -d
+docker-compose up -d
 ```
 
-## Seed Contents
+`db-init` 会自动执行：
 
-The current seed initializes at least:
+```bash
+pnpm exec prisma migrate deploy --schema prisma/schema.prisma
+pnpm exec prisma db seed
+```
 
-- built-in tenant record
-- role templates: `system_admin`, `tenant_admin`, `boss`, `supervisor`, `region_manager`, `staff`, `hr`, `finance`, `readonly_client`
-- capability catalog and template-capability bindings
-- legacy bootstrap users, roles, menus, and casbin data needed by the remaining system modules
+## 3. 初始化基线内容
 
-## Future Migration Workflow
+新环境初始化后至少会生成：
 
-Do not regenerate the whole baseline for ordinary schema changes.
+- 平台上下文：`built-in`
+- 租户：`tenant_a`、`tenant_b`
+- 平台预置角色模板：`system_admin`、`tenant_admin`、`boss`、`manager`、`staff`、`readonly`
+- 能力目录
+- 资源目录基础数据
+- 角色模板与能力映射
+- 管理台菜单与角色菜单映射
+- 统一授权接口绑定基线
+- 3 个管理员账号
 
-Create incremental migrations on top of the baseline:
+### 3.1 初始化账号
+
+| username | actorType | tenantId | tenant code | status | 用途 |
+| --- | --- | --- | --- | --- | --- |
+| `system_admin` | `system_admin` | `null` | `built-in` | `ENABLED` | 平台管理员 |
+| `tenant_admin_a` | `tenant_admin` | `tenant-a` | `tenant_a` | `ENABLED` | 租户 A 管理员 |
+| `tenant_admin_b` | `tenant_admin` | `tenant-b` | `tenant_b` | `ENABLED` | 租户 B 管理员 |
+
+约束：
+
+- 不再初始化业务演示账号。
+- `boss / manager / staff / readonly` 只作为模板存在，供租户后续复制创建角色。
+- `system_admin` 不绑定租户；两个租户管理员必须绑定各自租户。
+
+### 3.2 初始化密码策略
+
+当前基线的管理员账号使用同一份默认密码哈希，定义在：
+
+- `backend/prisma/seeds/sys/sysUser.ts`
+
+建议的落地规则：
+
+- 开发环境可以直接使用当前种子哈希。
+- 测试 / 生产环境在执行 `db seed` 前替换默认哈希，或初始化完成后立即重置管理员密码。
+- 本仓库当前基线未实现“首次登录强制改密”流程；如果项目需要，应作为独立业务需求追加。
+- 建议密码策略至少满足：12 位及以上，包含大小写字母、数字和特殊字符。
+
+## 4. 菜单验收
+
+### 4.1 平台管理员应看到
+
+- `平台管理 / 租户管理`
+- `平台管理 / 角色模板`
+- `平台管理 / 能力目录`
+- `平台管理 / 资源目录`
+- `平台管理 / 平台审计`
+
+### 4.2 租户管理员应看到
+
+- `租户管理 / 用户管理`
+- `租户管理 / 角色管理`
+- `租户管理 / 用户授权档案`
+- `租户管理 / 租户审计`
+
+## 5. 初始化验收清单
+
+初始化完成后至少检查：
+
+- `system_admin` 只能进入平台管理菜单。
+- `tenant_admin_a` 只能访问租户 A 的用户、角色、授权档案、审计数据。
+- `tenant_admin_b` 只能访问租户 B 的用户、角色、授权档案、审计数据。
+- `GET /roles` 已支持多能力 `ANY_OF` 绑定，既可被 `tenant.role.read` 使用，也可被 `tenant.role.reference.read` 使用。
+- `GET /audit-logs` 已按平台 / 租户能力区分放行。
+
+## 6. 后续迁移规则
+
+普通结构变更请继续追加迁移：
 
 ```bash
 cd backend
@@ -106,4 +128,4 @@ pnpm exec prisma migrate deploy --schema prisma/schema.prisma
 pnpm prisma:generate
 ```
 
-Use baseline regeneration only when you intentionally decide to squash migration history again.
+不要因为新增字段或新增模块重新生成全量 baseline。

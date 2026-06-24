@@ -1,57 +1,16 @@
 import { Prisma } from '@prisma/client';
-import { brandConfig } from '@lib/config';
 
 import { prisma } from '../helper';
 
+const DEFAULT_PASSWORD_HASH = '$2a$10$BrNwelZswsGy9FGCTARd5efBtM0Ra4Xz8e8DoT86EOju9Ii0jpBg6';
+const DEFAULT_AVATAR = 'https://minio.bytebytebrew.com/default/Ugly%20Avatar%20Face.png';
+
 export const initSysUser = async () => {
   const data: Prisma.SysUserCreateInput[] = [
-    {
-      id: '1',
-      username: brandConfig.seedUsers.super.username,
-      password: '$2a$10$BrNwelZswsGy9FGCTARd5efBtM0Ra4Xz8e8DoT86EOju9Ii0jpBg6',
-      domain: 'built-in',
-      built_in: true,
-      avatar: 'https://minio.bytebytebrew.com/default/Ugly%20Avatar%20Face.png',
-      email: '111@gmail.com',
-      phoneNumber: '18511111111',
-      nickName: brandConfig.seedUsers.super.nickName,
-      status: 'ENABLED',
-      createdAt: new Date('2024-05-15T00:00:00.000Z'),
-      createdBy: '-1',
-      updatedAt: null,
-      updatedBy: null,
-    },
-    {
-      id: '2',
-      username: 'Administrator',
-      password: '$2a$10$BrNwelZswsGy9FGCTARd5efBtM0Ra4Xz8e8DoT86EOju9Ii0jpBg6',
-      domain: 'built-in',
-      built_in: true,
-      avatar: 'https://minio.bytebytebrew.com/default/Ugly%20Avatar%20Face.png',
-      email: '222@gmail.com',
-      phoneNumber: '18522222222',
-      nickName: 'Admin',
-      status: 'ENABLED',
-      createdBy: '-1',
-      updatedAt: null,
-      updatedBy: null,
-    },
-    {
-      id: '3',
-      username: 'GeneralUser',
-      password: '$2a$10$BrNwelZswsGy9FGCTARd5efBtM0Ra4Xz8e8DoT86EOju9Ii0jpBg6',
-      domain: 'built-in',
-      built_in: true,
-      avatar: 'https://minio.bytebytebrew.com/default/Ugly%20Avatar%20Face.png',
-      email: '333@gmail.com',
-      phoneNumber: '18533333333',
-      nickName: 'User',
-      status: 'ENABLED',
-      createdBy: '-1',
-      updatedAt: null,
-      updatedBy: null,
-    },
+    { id: 'user-system-admin', username: 'system_admin', password: DEFAULT_PASSWORD_HASH, domain: 'built-in', tenantId: null, actorType: 'system_admin', built_in: true, avatar: DEFAULT_AVATAR, email: 'system_admin@jobtap.local', phoneNumber: '18500000001', nickName: 'System Admin', status: 'ENABLED', createdAt: new Date('2026-01-01T00:00:00.000Z'), createdBy: '-1', updatedAt: null, updatedBy: null },
+    { id: 'user-tenant-admin-a', username: 'tenant_admin_a', password: DEFAULT_PASSWORD_HASH, domain: 'tenant_a', tenantId: 'tenant-a', actorType: 'tenant_admin', built_in: true, avatar: DEFAULT_AVATAR, email: 'tenant_admin_a@jobtap.local', phoneNumber: '18500000002', nickName: 'Tenant Admin A', status: 'ENABLED', createdAt: new Date('2026-01-01T00:00:00.000Z'), createdBy: '-1', updatedAt: null, updatedBy: null },
+    { id: 'user-tenant-admin-b', username: 'tenant_admin_b', password: DEFAULT_PASSWORD_HASH, domain: 'tenant_b', tenantId: 'tenant-b', actorType: 'tenant_admin', built_in: true, avatar: DEFAULT_AVATAR, email: 'tenant_admin_b@jobtap.local', phoneNumber: '18500000003', nickName: 'Tenant Admin B', status: 'ENABLED', createdAt: new Date('2026-01-01T00:00:00.000Z'), createdBy: '-1', updatedAt: null, updatedBy: null }
   ];
 
-  return prisma.sysUser.createMany({ data });
+  return prisma.sysUser.createMany({ data, skipDuplicates: true });
 };

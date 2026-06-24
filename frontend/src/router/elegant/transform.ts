@@ -177,7 +177,15 @@ const routeMap: RouteMap = {
   "manage_menu": "/manage/menu",
   "manage_role": "/manage/role",
   "manage_user": "/manage/user",
-  "manage_user-detail": "/manage/user-detail/:id"
+  "manage_user-detail": "/manage/user-detail/:id",
+  "platform": "/platform",
+  "platform_audit": "/platform/audit",
+  "platform_capability": "/platform/capability",
+  "platform_role-template": "/platform/role-template",
+  "platform_tenant": "/platform/tenant",
+  "tenant": "/tenant",
+  "tenant_audit": "/tenant/audit",
+  "tenant_user-auth-profile": "/tenant/user-auth-profile"
 };
 
 /**

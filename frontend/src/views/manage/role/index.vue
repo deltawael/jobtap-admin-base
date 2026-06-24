@@ -4,11 +4,15 @@ import { enableStatusRecord } from '@/constants/business';
 import { deleteRole, fetchGetRoleList } from '@/service/api';
 import { useAppStore } from '@/store/modules/app';
 import { useTable, useTableOperate } from '@/hooks/common/table';
-import { $t } from '@/locales';
+import {} from '@/locales';
 import RoleOperateDrawer from './modules/role-operate-drawer.vue';
 import RoleSearch from './modules/role-search.vue';
 
 const appStore = useAppStore();
+const roleStatusTagMap = {
+  ENABLED: 'success',
+  DISABLED: 'warning'
+} as const;
 
 const {
   columns,
@@ -22,90 +26,52 @@ const {
   resetSearchParams
 } = useTable({
   apiFn: fetchGetRoleList,
-  apiParams: {
-    current: 1,
-    size: 10,
-    status: null,
-    name: null,
-    code: null
-  },
+  apiParams: { current: 1, size: 10, status: null, name: null, code: null },
   columns: () => [
-    {
-      type: 'selection',
-      align: 'center',
-      width: 48
-    },
-    {
-      key: 'index',
-      title: $t('common.index'),
-      width: 64,
-      align: 'center'
-    },
-    {
-      key: 'name',
-      title: $t('page.manage.role.roleName'),
-      align: 'center',
-      minWidth: 140
-    },
-    {
-      key: 'code',
-      title: $t('page.manage.role.roleCode'),
-      align: 'center',
-      minWidth: 140
-    },
-    {
-      key: 'templateName',
-      title: '模板',
-      align: 'center',
-      minWidth: 140,
-      render: row => row.templateName || '-'
-    },
+    { type: 'selection', align: 'center', width: 48 },
+    { key: 'index', title: 'common.index', width: 64, align: 'center' },
+    { key: 'name', title: 'page.manage.role.roleName', align: 'center', minWidth: 140 },
+    { key: 'code', title: 'page.manage.role.roleCode', align: 'center', minWidth: 160 },
+    { key: 'templateName', title: '模板', align: 'center', minWidth: 140, render: row => row.templateName || '-' },
     {
       key: 'capabilityCount',
       title: '能力数',
       align: 'center',
-      width: 120,
+      width: 100,
       render: row => <NTag type="info">{row.capabilityCount || 0}</NTag>
     },
     {
-      key: 'description',
-      title: $t('page.manage.role.roleDesc'),
-      minWidth: 180
-    },
-    {
-      key: 'status',
-      title: $t('page.manage.role.roleStatus'),
+      key: 'scopePolicyCount',
+      title: 'Scope数',
       align: 'center',
       width: 100,
-      render: row => {
-        if (row.status === null) {
-          return null;
-        }
-
-        const tagMap: Record<Api.Common.EnableStatus, NaiveUI.ThemeColor> = {
-          ENABLED: 'success',
-          DISABLED: 'warning'
-        };
-
-        return <NTag type={tagMap[row.status]}>{$t(enableStatusRecord[row.status])}</NTag>;
-      }
+      render: row => <NTag type="warning">{row.scopePolicyCount || 0}</NTag>
+    },
+    { key: 'description', title: 'page.manage.role.roleDesc', minWidth: 180 },
+    {
+      key: 'status',
+      title: 'page.manage.role.roleStatus',
+      align: 'center',
+      width: 100,
+      render: row =>
+        row.status === null ? null : <NTag type={roleStatusTagMap[row.status]}>{enableStatusRecord[row.status]}</NTag>
     },
     {
       key: 'operate',
-      title: $t('common.operate'),
+      title: 'common.operate',
       align: 'center',
       minWidth: 140,
       render: row => (
         <div class="flex-center gap-8px">
           <NButton type="primary" ghost size="small" onClick={() => edit(row.id)}>
-            {$t('common.edit')}
+            {'common.edit'}
           </NButton>
           <NPopconfirm onPositiveClick={() => handleDelete(row.id)}>
             {{
-              default: () => $t('common.confirmDelete'),
+              default: () => 'common.confirmDelete',
               trigger: () => (
                 <NButton type="error" ghost size="small" disabled={row.builtIn}>
-                  {$t('common.delete')}
+                  {'common.delete'}
                 </NButton>
               )
             }}
@@ -137,7 +103,7 @@ function edit(id: string) {
 <template>
   <div class="min-h-500px flex-col-stretch gap-16px overflow-hidden lt-sm:overflow-auto">
     <RoleSearch v-model:model="searchParams" @reset="resetSearchParams" @search="getDataByPage" />
-    <NCard :title="$t('page.manage.role.title')" :bordered="false" size="small" class="sm:flex-1-hidden card-wrapper">
+    <NCard title="角色管理" :bordered="false" size="small" class="sm:flex-1-hidden card-wrapper">
       <template #header-extra>
         <TableHeaderOperation
           v-model:columns="columnChecks"
@@ -154,7 +120,7 @@ function edit(id: string) {
         :data="data"
         size="small"
         :flex-height="!appStore.isMobile"
-        :scroll-x="920"
+        :scroll-x="980"
         :loading="loading"
         remote
         :row-key="row => row.id"

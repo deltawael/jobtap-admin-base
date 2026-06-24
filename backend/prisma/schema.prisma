@@ -148,6 +148,11 @@ enum CapabilityKind {
   view
 }
 
+enum CapabilityBindingMode {
+  ANY_OF
+  ALL_OF
+}
+
 enum ScopeType {
   all
   self
@@ -181,6 +186,7 @@ model Capability {
   name        String
   module      String
   kind        CapabilityKind
+  builtIn     Boolean        @default(true) @map("built_in")
   description String?
   status      Status
   createdAt   DateTime       @default(now()) @map("created_at")
@@ -295,17 +301,18 @@ model CapabilityUiBinding {
 }
 
 model CapabilityApiBinding {
-  id           String    @id @default(cuid())
-  capabilityId String    @map("capability_id")
-  endpointId   String?   @map("endpoint_id")
+  id           String                @id @default(cuid())
+  capabilityId String                @map("capability_id")
+  endpointId   String?               @map("endpoint_id")
   resource     String
   action       String
+  bindingMode  CapabilityBindingMode @default(ANY_OF) @map("binding_mode")
   method       String?
   path         String?
-  createdAt    DateTime  @default(now()) @map("created_at")
-  createdBy    String    @map("created_by")
-  updatedAt    DateTime? @updatedAt @map("updated_at")
-  updatedBy    String?   @map("updated_by")
+  createdAt    DateTime              @default(now()) @map("created_at")
+  createdBy    String                @map("created_by")
+  updatedAt    DateTime?             @updatedAt @map("updated_at")
+  updatedBy    String?               @map("updated_by")
 
   @@index([capabilityId, resource, action])
   @@map("capability_api_bindings")

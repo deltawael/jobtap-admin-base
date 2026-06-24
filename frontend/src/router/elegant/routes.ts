@@ -159,5 +159,81 @@ export const generatedRoutes: GeneratedRoute[] = [
         }
       }
     ]
+  },
+  {
+    name: 'platform',
+    path: '/platform',
+    component: 'layout.base',
+    meta: {
+      title: 'platform',
+      i18nKey: 'route.platform'
+    },
+    children: [
+      {
+        name: 'platform_audit',
+        path: '/platform/audit',
+        component: 'view.platform_audit',
+        meta: {
+          title: 'platform_audit',
+          i18nKey: 'route.platform_audit'
+        }
+      },
+      {
+        name: 'platform_capability',
+        path: '/platform/capability',
+        component: 'view.platform_capability',
+        meta: {
+          title: 'platform_capability',
+          i18nKey: 'route.platform_capability'
+        }
+      },
+      {
+        name: 'platform_role-template',
+        path: '/platform/role-template',
+        component: 'view.platform_role-template',
+        meta: {
+          title: 'platform_role-template',
+          i18nKey: 'route.platform_role-template'
+        }
+      },
+      {
+        name: 'platform_tenant',
+        path: '/platform/tenant',
+        component: 'view.platform_tenant',
+        meta: {
+          title: 'platform_tenant',
+          i18nKey: 'route.platform_tenant'
+        }
+      }
+    ]
+  },
+  {
+    name: 'tenant',
+    path: '/tenant',
+    component: 'layout.base',
+    meta: {
+      title: 'tenant',
+      i18nKey: 'route.tenant'
+    },
+    children: [
+      {
+        name: 'tenant_audit',
+        path: '/tenant/audit',
+        component: 'view.tenant_audit',
+        meta: {
+          title: 'tenant_audit',
+          i18nKey: 'route.tenant_audit'
+        }
+      },
+      {
+        name: 'tenant_user-auth-profile',
+        path: '/tenant/user-auth-profile',
+        component: 'view.tenant_user-auth-profile',
+        meta: {
+          title: 'tenant_user-auth-profile',
+          i18nKey: 'route.tenant_user-auth-profile'
+        }
+      }
+    ]
   }
 ];

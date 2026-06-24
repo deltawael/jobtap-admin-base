@@ -32,6 +32,14 @@ declare module "@elegant-router/types" {
     "manage_role": "/manage/role";
     "manage_user": "/manage/user";
     "manage_user-detail": "/manage/user-detail/:id";
+    "platform": "/platform";
+    "platform_audit": "/platform/audit";
+    "platform_capability": "/platform/capability";
+    "platform_role-template": "/platform/role-template";
+    "platform_tenant": "/platform/tenant";
+    "tenant": "/tenant";
+    "tenant_audit": "/tenant/audit";
+    "tenant_user-auth-profile": "/tenant/user-auth-profile";
   };
 
   /**
@@ -72,6 +80,8 @@ declare module "@elegant-router/types" {
     | "log"
     | "login"
     | "manage"
+    | "platform"
+    | "tenant"
   >;
 
   /**
@@ -101,6 +111,12 @@ declare module "@elegant-router/types" {
     | "manage_role"
     | "manage_user-detail"
     | "manage_user"
+    | "platform_audit"
+    | "platform_capability"
+    | "platform_role-template"
+    | "platform_tenant"
+    | "tenant_audit"
+    | "tenant_user-auth-profile"
   >;
 
   /**

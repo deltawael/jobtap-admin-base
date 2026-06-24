@@ -19,6 +19,18 @@ export class PageUsersDto extends PaginationParams {
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @IsString({ message: 'Phone number must be a string' })
+  @IsNotEmpty({ message: 'Phone number cannot be empty' })
+  phoneNumber?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString({ message: 'Email must be a string' })
+  @IsNotEmpty({ message: 'Email cannot be empty' })
+  email?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsEnum(Status, { message: 'Status must be a valid enum value' })
   status?: Status;
 }

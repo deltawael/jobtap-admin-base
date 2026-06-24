@@ -172,6 +172,14 @@ const local: App.I18n.Schema = {
     'manage_user-detail': '用户详情',
     manage_role: '角色管理',
     manage_menu: '菜单管理',
+    platform: '平台管理',
+    platform_tenant: '租户管理',
+    'platform_role-template': '角色模板',
+    platform_capability: '能力目录',
+    platform_audit: '平台审计',
+    tenant: '租户管理',
+    'tenant_user-auth-profile': '用户授权档案',
+    tenant_audit: '租户审计',
     'access-key': '访问密钥',
     log: '日志',
     log_login: '登录日志',
@@ -337,7 +345,8 @@ const local: App.I18n.Schema = {
         addChildMenu: '新增子菜单',
         type: {
           directory: '目录',
-          menu: '菜单'
+          menu: '菜单',
+          button: '按钮'
         },
         iconType: {
           iconify: 'iconify图标',

@@ -3,41 +3,11 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../helper';
 
 export const initSysRole = async () => {
-  const data: Prisma.SysRoleCreateInput[] = [
-    {
-      id: '1',
-      code: 'ROLE_SUPER',
-      name: '超级管理员',
-      description: '超级管理员',
-      pid: '0',
-      status: 'ENABLED',
-      createdBy: '-1',
-      updatedAt: null,
-      updatedBy: null,
-    },
-    {
-      id: '2',
-      code: 'ROLE_ADMIN',
-      name: '管理员',
-      description: '管理员',
-      pid: '1',
-      status: 'ENABLED',
-      createdBy: '-1',
-      updatedAt: null,
-      updatedBy: null,
-    },
-    {
-      id: '3',
-      code: 'ROLE_USER',
-      name: '用户',
-      description: '用户',
-      pid: '1',
-      status: 'ENABLED',
-      createdBy: '-1',
-      updatedAt: null,
-      updatedBy: null,
-    },
+  const data: Prisma.SysRoleCreateManyInput[] = [
+    { id: 'role-system-admin', code: 'ROLE_SYSTEM_ADMIN', name: 'System Admin', tenantId: null, templateId: 'rt-system-admin', builtIn: true, description: 'Bootstrap system administrator role', pid: '0', status: 'ENABLED', createdBy: '-1', updatedBy: '-1' },
+    { id: 'role-tenant-admin-a', code: 'ROLE_TENANT_ADMIN_A', name: 'Tenant Admin A', tenantId: 'tenant-a', templateId: 'rt-tenant-admin', builtIn: true, description: 'Bootstrap tenant administrator role for tenant A', pid: '0', status: 'ENABLED', createdBy: '-1', updatedBy: '-1' },
+    { id: 'role-tenant-admin-b', code: 'ROLE_TENANT_ADMIN_B', name: 'Tenant Admin B', tenantId: 'tenant-b', templateId: 'rt-tenant-admin', builtIn: true, description: 'Bootstrap tenant administrator role for tenant B', pid: '0', status: 'ENABLED', createdBy: '-1', updatedBy: '-1' }
   ];
 
-  return prisma.sysRole.createMany({ data });
+  return prisma.sysRole.createMany({ data, skipDuplicates: true });
 };
