@@ -5,7 +5,7 @@ import { OperationLogProperties } from '@app/base-system/lib/bounded-contexts/lo
 export class OperationLog extends AggregateRoot {
   readonly userId: string;
   readonly username: string;
-  readonly domain: string;
+  readonly tenantId: string | null;
   readonly moduleName: string;
   readonly description: string;
   readonly requestId: string;

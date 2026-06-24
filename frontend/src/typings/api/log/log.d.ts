@@ -1,7 +1,7 @@
 declare namespace Log {
   type LoginLog = Api.Common.CommonRecord<{
     username: string;
-    domain: string;
+    tenantId: string | null;
     loginTime: string;
     port: number | null;
     address: string;
@@ -13,13 +13,13 @@ declare namespace Log {
   type LoginLogList = Api.Common.PaginatingQueryRecord<LoginLog>;
 
   type LoginLogSearchParams = CommonType.RecordNullable<
-    Pick<LoginLog, 'username' | 'domain' | 'address' | 'type'> & Api.Common.CommonSearchParams
+    Pick<LoginLog, 'username' | 'tenantId' | 'address' | 'type'> & Api.Common.CommonSearchParams
   >;
 
   type OperationLog = Api.Common.CommonRecord<{
     userId: string;
     username: string;
-    domain: string;
+    tenantId: string | null;
     moduleName: string;
     description: string;
     requestId: string;
@@ -38,6 +38,6 @@ declare namespace Log {
   type OperationLogList = Api.Common.PaginatingQueryRecord<OperationLog>;
 
   type OperationLogSearchParams = CommonType.RecordNullable<
-    Pick<OperationLog, 'username' | 'domain' | 'moduleName' | 'method'> & Api.Common.CommonSearchParams
+    Pick<OperationLog, 'username' | 'tenantId' | 'moduleName' | 'method'> & Api.Common.CommonSearchParams
   >;
 }

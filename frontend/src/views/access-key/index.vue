@@ -26,8 +26,6 @@ const {
   apiParams: {
     current: 1,
     size: 10,
-    // if you want to use the searchParams in Form, you need to define the following properties, and the value is null
-    // the value can not be undefined, otherwise the property in Form will not be reactive
     status: null
   },
   columns: () => [
@@ -43,10 +41,10 @@ const {
       width: 64
     },
     {
-      key: 'domain',
-      title: 'domain',
+      key: 'tenantId',
+      title: '租户ID',
       align: 'center',
-      minWidth: 100
+      minWidth: 120
     },
     {
       key: 'AccessKeyID',
@@ -106,27 +104,15 @@ const {
   ]
 });
 
-const {
-  drawerVisible,
-  operateType,
-  editingData,
-  handleAdd,
-  handleEdit,
-  checkedRowKeys,
-  onBatchDeleted,
-  onDeleted
-  // closeDrawer
-} = useTableOperate(data, getData);
+const { drawerVisible, operateType, editingData, handleAdd, handleEdit, checkedRowKeys, onBatchDeleted, onDeleted } =
+  useTableOperate(data, getData);
 
 async function handleBatchDelete() {
-  // request
   console.log(checkedRowKeys.value);
-
   onBatchDeleted();
 }
 
 async function handleDelete(id: string) {
-  // request
   const { error } = await deleteAccessKey(id);
   if (error) return;
   await onDeleted();

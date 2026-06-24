@@ -5,6 +5,7 @@ import { OperationLogProperties } from '@app/base-system/lib/bounded-contexts/lo
 import { OperationLogReadRepoPort } from '@app/base-system/lib/bounded-contexts/log-audit/operation-log/ports/operation-log.read.repo-port';
 import { PageOperationLogsQuery } from '@app/base-system/lib/bounded-contexts/log-audit/operation-log/queries/page-operation-logs.query';
 
+import { BUILT_IN } from '@lib/shared/prisma/db.constant';
 import { PaginationResult } from '@lib/shared/prisma/pagination';
 import { PrismaService } from '@lib/shared/prisma/prisma.service';
 
@@ -23,8 +24,8 @@ export class OperationLogReadRepository implements OperationLogReadRepoPort {
       };
     }
 
-    if (query.domain) {
-      where.domain = query.domain;
+    if (query.tenantId) {
+      where.domain = query.tenantId;
     }
 
     if (query.moduleName) {
@@ -38,7 +39,7 @@ export class OperationLogReadRepository implements OperationLogReadRepoPort {
     }
 
     const operationLogs = await this.prisma.sysOperationLog.findMany({
-      where: where,
+      where,
       skip: (query.current - 1) * query.size,
       take: query.size,
       orderBy: [
@@ -48,13 +49,18 @@ export class OperationLogReadRepository implements OperationLogReadRepoPort {
       ],
     });
 
-    const total = await this.prisma.sysOperationLog.count({ where: where });
+    const total = await this.prisma.sysOperationLog.count({ where });
+
+    const rows = operationLogs.map(({ domain, ...log }) => ({
+      ...log,
+      tenantId: domain === BUILT_IN ? null : domain,
+    }));
 
     return new PaginationResult<OperationLogProperties>(
       query.current,
       query.size,
       total,
-      operationLogs,
+      rows,
     );
   }
 }

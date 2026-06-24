@@ -17,7 +17,6 @@ import { MenuCreateCommand } from '@app/base-system/lib/bounded-contexts/iam/men
 import { MenuDeleteCommand } from '@app/base-system/lib/bounded-contexts/iam/menu/commands/menu-delete.command';
 import { MenuUpdateCommand } from '@app/base-system/lib/bounded-contexts/iam/menu/commands/menu-update.command';
 import { MenuTreeProperties } from '@app/base-system/lib/bounded-contexts/iam/menu/domain/menu.read.model';
-import { MenuIdsByRoleIdAndDomainQuery } from '@app/base-system/lib/bounded-contexts/iam/menu/queries/menu-ids.by-role_id&domain.query';
 import { MenusQuery } from '@app/base-system/lib/bounded-contexts/iam/menu/queries/menus.query';
 import { MenusTreeQuery } from '@app/base-system/lib/bounded-contexts/iam/menu/queries/menus.tree.query';
 
@@ -155,17 +154,5 @@ export class MenuController {
   async deleteRoute(@Param('id') id: number): Promise<ApiRes<null>> {
     await this.commandBus.execute(new MenuDeleteCommand(id));
     return ApiRes.ok();
-  }
-
-  @Get('auth-route/:roleId')
-  @ApiOperation({
-    summary: 'Authorized Routes',
-  })
-  async authRoute(@Param('roleId') roleId: string, @Request() req: any) {
-    const result = await this.queryBus.execute<
-      MenuIdsByRoleIdAndDomainQuery,
-      number[]
-    >(new MenuIdsByRoleIdAndDomainQuery(roleId, req.user.domain));
-    return ApiRes.success(result);
   }
 }

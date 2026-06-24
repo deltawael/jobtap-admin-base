@@ -22,7 +22,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     return this.validateAuthenticationPayload(payload);
   }
 
-  //TODO 此处可用class-validator验证处理
   assertIsIAuthentication(payload: any): asserts payload is IAuthentication {
     if (typeof payload.uid !== 'string' && typeof payload.userId !== 'string') {
       throw new UnauthorizedException('Invalid user id');
@@ -30,13 +29,18 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (typeof payload.username !== 'string') {
       throw new UnauthorizedException('Invalid username');
     }
-    if (payload.domain !== null && payload.domain !== undefined && typeof payload.domain !== 'string') {
-      throw new UnauthorizedException('Invalid tenant code');
-    }
-    if (payload.tenantId !== null && payload.tenantId !== undefined && typeof payload.tenantId !== 'string') {
+    if (
+      payload.tenantId !== null &&
+      payload.tenantId !== undefined &&
+      typeof payload.tenantId !== 'string'
+    ) {
       throw new UnauthorizedException('Invalid tenant id');
     }
-    if (payload.actorType !== 'system_admin' && payload.actorType !== 'tenant_admin' && payload.actorType !== 'tenant_user') {
+    if (
+      payload.actorType !== 'system_admin' &&
+      payload.actorType !== 'tenant_admin' &&
+      payload.actorType !== 'tenant_user'
+    ) {
       throw new UnauthorizedException('Invalid actor type');
     }
   }
@@ -47,11 +51,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       uid: payload.uid ?? payload.userId,
       userId: payload.userId ?? payload.uid,
       username: payload.username,
-      domain: payload.domain ?? null,
       tenantId: payload.tenantId ?? null,
       actorType: payload.actorType,
     };
   }
 }
-
-

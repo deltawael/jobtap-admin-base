@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Request, UseGuards } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -29,12 +29,14 @@ export class LoginLogController {
   @ApiResponseDoc({ type: LoginLogReadModel, isPaged: true })
   async page(
     @Query() queryDto: PageLoginLogsQueryDto,
+    @Request() req: any,
   ): Promise<ApiRes<PaginationResult<LoginLogProperties>>> {
     const query = new PageLoginLogsQuery({
       current: queryDto.current,
       size: queryDto.size,
       username: queryDto.username,
-      domain: queryDto.domain,
+      tenantId:
+        req.user.actorType === 'system_admin' ? queryDto.tenantId : req.user.tenantId,
       address: queryDto.address,
       type: queryDto.type,
     });

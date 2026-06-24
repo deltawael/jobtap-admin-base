@@ -17,10 +17,8 @@ const { columns, data, getData, getDataByPage, loading, mobilePagination, search
   apiParams: {
     current: 1,
     size: 20,
-    // if you want to use the searchParams in Form, you need to define the following properties, and the value is null
-    // the value can not be undefined, otherwise the property in Form will not be reactive
     username: null,
-    domain: null,
+    tenantId: null,
     address: null,
     type: null
   },
@@ -38,10 +36,10 @@ const { columns, data, getData, getDataByPage, loading, mobilePagination, search
       minWidth: 100
     },
     {
-      key: 'domain',
-      title: 'domain',
+      key: 'tenantId',
+      title: '租户ID',
       align: 'center',
-      width: 80
+      width: 120
     },
     {
       key: 'loginTime',

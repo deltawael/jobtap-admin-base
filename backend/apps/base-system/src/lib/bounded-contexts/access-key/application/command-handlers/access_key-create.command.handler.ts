@@ -21,7 +21,7 @@ export class AccessKeyCreateHandler
   async execute(command: AccessKeyCreateCommand) {
     const accessKeyProperties: AccessKeyProperties = {
       id: UlidGenerator.generate(),
-      domain: command.domain,
+      tenantId: command.tenantId,
       AccessKeyID: UlidGenerator.generate(),
       AccessKeySecret: UlidGenerator.generate(),
       status: Status.ENABLED,

@@ -54,6 +54,13 @@ interface RolePayload {
   scopePolicies?: ScopePolicyInput[];
 }
 
+interface TenantPayload {
+  code?: string;
+  name?: string;
+  description?: string | null;
+  status?: Status;
+}
+
 interface RoleTemplatePayload {
   code: string;
   name: string;
@@ -139,13 +146,13 @@ export class TenantAuthzController {
   }
 
   @Post('tenants')
-  async createTenant(@Request() req: any, @Body() body: any): Promise<ApiRes<any>> {
+  async createTenant(@Request() req: any, @Body() body: TenantPayload): Promise<ApiRes<any>> {
     const actor = req.user as IAuthentication;
     this.assertSystemAdmin(actor);
     const created = await this.prisma.tenant.create({
       data: {
-        code: body.code,
-        name: body.name,
+        code: body.code ?? '',
+        name: body.name ?? '',
         description: body.description ?? null,
         status: body.status ?? Status.ENABLED,
         createdBy: actor.userId,
@@ -154,6 +161,25 @@ export class TenantAuthzController {
     });
     await this.writeAuditLog(actor, 'tenant.create', 'tenant', created.id, created);
     return ApiRes.success(created);
+  }
+
+  @Put('tenants/:id')
+  async updateTenant(@Request() req: any, @Param('id') id: string, @Body() body: TenantPayload): Promise<ApiRes<any>> {
+    const actor = req.user as IAuthentication;
+    this.assertSystemAdmin(actor);
+    const existing = await this.prisma.tenant.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Tenant not found');
+    const updated = await this.prisma.tenant.update({
+      where: { id },
+      data: {
+        name: body.name ?? existing.name,
+        description: body.description === undefined ? existing.description : body.description,
+        status: body.status ?? existing.status,
+        updatedBy: actor.userId,
+      },
+    });
+    await this.writeAuditLog(actor, 'tenant.update', 'tenant', id, { before: existing, after: updated });
+    return ApiRes.success(updated);
   }
 
   @Get('role-templates')
@@ -391,6 +417,15 @@ export class TenantAuthzController {
     return ApiRes.success(updated);
   }
 
+  @Get('authz/routes')
+  async routes(@Request() req: any): Promise<ApiRes<any>> {
+    const actor = req.user as IAuthentication;
+    const bundle = await this.resolveAuthorizationBundle(actor, actor.userId);
+    const routes = await this.resolveCapabilityRoutes(bundle.capabilities);
+    const home = routes.some((item: any) => item.name === 'home') ? 'home' : '';
+    return ApiRes.success({ routes, home });
+  }
+
   @Get('audit-logs')
   async listAuditLogs(@Request() req: any, @Query() query: any): Promise<ApiRes<any>> {
     const actor = req.user as IAuthentication;
@@ -431,7 +466,7 @@ export class TenantAuthzController {
   }
 
   private isSystemAdmin(actor: IAuthentication) {
-    return actor.actorType === 'system_admin' || actor.domain === 'built-in';
+    return actor.actorType === 'system_admin';
   }
 
   private assertSystemAdmin(actor: IAuthentication) {
@@ -439,10 +474,7 @@ export class TenantAuthzController {
   }
 
   private async resolveActorTenantId(actor: IAuthentication): Promise<string | null> {
-    if (actor.tenantId) return actor.tenantId;
-    if (!actor.domain || actor.domain === 'built-in') return null;
-    const tenant = await this.prisma.tenant.findUnique({ where: { code: actor.domain } });
-    return tenant?.id ?? null;
+    return actor.tenantId ?? null;
   }
 
   private async resolveScopedTenantId(actor: IAuthentication, requestedTenantId?: string | null) {
@@ -647,6 +679,77 @@ export class TenantAuthzController {
     return bindings.map(item => ({ capabilityId: item.capabilityId, capabilityCode: capabilityCodeMap.get(item.capabilityId) ?? null, resourceType: item.resourceType, viewKey: item.viewKey }));
   }
 
+  private async resolveCapabilityRoutes(capabilities: any[]) {
+    const menus = await this.prisma.sysMenu.findMany({
+      where: { constant: false, status: Status.ENABLED },
+      orderBy: [{ order: 'asc' }, { id: 'asc' }],
+    });
+    const allowedMenuIds = new Set<number>();
+    const menuMap = new Map(menus.map(item => [item.id, item] as const));
+    const homeMenu = menus.find(item => item.routeName === 'home');
+    if (homeMenu) {
+      allowedMenuIds.add(homeMenu.id);
+    }
+
+    if (capabilities.length) {
+      const bindings = await this.prisma.capabilityUiBinding.findMany({
+        where: { capabilityId: { in: capabilities.map(item => item.id) }, resourceType: 'menu' },
+      });
+      const routeNameSet = new Set(bindings.map(item => item.routeName).filter(Boolean));
+      const resourceCodeSet = new Set(bindings.map(item => item.resourceCode).filter(Boolean));
+      bindings.forEach(item => {
+        if (item.menuId) {
+          allowedMenuIds.add(item.menuId);
+        }
+      });
+      menus.forEach(menu => {
+        if (routeNameSet.has(menu.routeName) || resourceCodeSet.has(menu.routeName)) {
+          allowedMenuIds.add(menu.id);
+        }
+      });
+    }
+
+    const stack = [...allowedMenuIds];
+    while (stack.length) {
+      const currentId = stack.pop();
+      if (currentId === undefined) continue;
+      const current = menuMap.get(currentId);
+      if (!current || current.pid === 0) continue;
+      const parent = menuMap.get(current.pid);
+      if (parent && !allowedMenuIds.has(parent.id)) {
+        allowedMenuIds.add(parent.id);
+        stack.push(parent.id);
+      }
+    }
+
+    const allowedMenus = menus.filter(item => allowedMenuIds.has(item.id));
+    return this.buildCapabilityRouteTree(allowedMenus);
+  }
+
+  private buildCapabilityRouteTree(menus: any[], pid = 0): any[] {
+    return menus
+      .filter(item => item.pid === pid)
+      .sort((a, b) => a.order - b.order)
+      .map(item => ({
+        name: item.routeName,
+        path: item.routePath,
+        component: item.component,
+        meta: {
+          title: item.menuName,
+          i18nKey: item.i18nKey,
+          keepAlive: item.keepAlive,
+          constant: item.constant,
+          icon: item.icon,
+          order: item.order,
+          href: item.href,
+          hideInMenu: item.hideInMenu,
+          activeMenu: item.activeMenu,
+          multiTab: item.multiTab,
+        },
+        children: this.buildCapabilityRouteTree(menus, item.id),
+      }));
+  }
+
   private evaluateScope(bundle: any, capabilityId: string, resource: Record<string, any>, context: Record<string, any>) {
     const scopes = bundle.scopes.filter((item: any) => item.capabilityId === capabilityId);
     if (!scopes.length) return true;
@@ -698,3 +801,4 @@ export class TenantAuthzController {
     await this.prisma.auditLog.create({ data: { tenantId: await this.resolveActorTenantId(actor), actorUserId: actor.userId, actorUsername: actor.username, actorType: actor.actorType, action, resourceType, resourceId, detail: this.toAuditJson(detail) } });
   }
 }
+

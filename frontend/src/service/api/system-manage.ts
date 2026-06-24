@@ -5,11 +5,6 @@ export function fetchGetRoleList(params?: Api.SystemManage.RoleSearchParams) {
   return request<Api.SystemManage.RoleList>({ url: '/roles', method: 'get', params });
 }
 
-/** get all roles */
-export function fetchGetAllRoles() {
-  return request<Api.SystemManage.AllRole[]>({ url: '/systemManage/getAllRoles', method: 'get' });
-}
-
 /** get user list */
 export function fetchGetUserList(params?: Api.SystemManage.UserSearchParams) {
   return request<Api.SystemManage.UserList>({ url: '/user', method: 'get', params });
@@ -29,10 +24,6 @@ export async function fetchGetMenuList(
   };
 }
 
-export function fetchGetAllPages() {
-  return request<string[]>({ url: '/systemManage/getAllPages', method: 'get' });
-}
-
 export function fetchGetMenuTree() {
   return request<Api.SystemManage.Menu[]>({ url: '/route/tree', method: 'get' });
 }
@@ -41,8 +32,16 @@ export function fetchGetTenants() {
   return request<Api.SystemManage.Tenant[]>({ url: '/tenants', method: 'get' });
 }
 
-export function createTenant(req: Api.SystemManage.TenantModel) {
+export type TenantModel = Partial<Pick<Api.SystemManage.Tenant, 'id'>> &
+  Pick<Api.SystemManage.Tenant, 'code' | 'name' | 'description'> &
+  Partial<Pick<Api.SystemManage.Tenant, 'status'>>;
+
+export function createTenant(req: TenantModel) {
   return request({ url: '/tenants', method: 'post', data: req });
+}
+
+export function updateTenant(req: TenantModel) {
+  return request({ url: `/tenants/${req.id}`, method: 'put', data: req });
 }
 
 export type RoleTemplateModel = Partial<Pick<Api.SystemManage.RoleTemplate, 'id'>> &
@@ -122,26 +121,6 @@ export function fetchGetAuditLogList(params?: Api.SystemManage.AuditLogSearchPar
   return request<Api.SystemManage.AuditLogList>({ url: '/audit-logs', method: 'get', params });
 }
 
-export function fetchGetRoleMenuIds(roleId: string) {
-  return request<number[]>({ url: `/route/auth-route/${roleId}`, method: 'get' });
-}
-
-export function fetchAssignRoutes(req: Api.SystemManage.RoleMenu) {
-  return request<boolean>({
-    url: '/authorization/assign-routes',
-    method: 'post',
-    data: { ...req, domain: 'built-in' }
-  });
-}
-
-export function fetchAssignPermission(req: Api.SystemManage.RolePermission) {
-  return request<boolean>({
-    url: '/authorization/assign-permission',
-    method: 'post',
-    data: { ...req, domain: 'built-in' }
-  });
-}
-
 export type RouteModel = Pick<
   Api.SystemManage.Menu,
   | 'menuType'
@@ -192,14 +171,4 @@ export function updateUser(req: UserModel) {
 
 export function deleteUser(id: string) {
   return request({ url: `/user/${id}`, method: 'delete' });
-}
-
-export function fetchGetApiEndpointTree() {
-  return request<Api.SystemManage.ApiEndpoint[]>({ url: '/api-endpoint/tree', method: 'get' });
-}
-
-export async function fetchGetRoleApiEndpoints(roleCode: string) {
-  const response = await request<any[]>({ url: `/api-endpoint/auth-api-endpoint/${roleCode}`, method: 'get' });
-  const casbinRules = response.data || [];
-  return casbinRules.map(item => `${item.v1}:${item.v2}`);
 }

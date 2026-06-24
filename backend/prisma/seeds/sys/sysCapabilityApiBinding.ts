@@ -4,6 +4,10 @@ import { prisma } from '../helper';
 
 export const initCapabilityApiBinding = async () => {
   const data: Prisma.CapabilityApiBindingCreateManyInput[] = [
+    { id: 'binding-tenant-list-read', capabilityId: 'cap-platform-tenant-read', resource: 'tenants', action: 'list', bindingMode: 'ANY_OF', method: 'GET', path: '/tenants', createdBy: '-1', updatedBy: '-1' },
+    { id: 'binding-tenant-list-manage', capabilityId: 'cap-platform-tenant-manage', resource: 'tenants', action: 'list', bindingMode: 'ANY_OF', method: 'GET', path: '/tenants', createdBy: '-1', updatedBy: '-1' },
+    { id: 'binding-tenant-create', capabilityId: 'cap-platform-tenant-manage', resource: 'tenants', action: 'create', bindingMode: 'ALL_OF', method: 'POST', path: '/tenants', createdBy: '-1', updatedBy: '-1' },
+    { id: 'binding-tenant-update', capabilityId: 'cap-platform-tenant-manage', resource: 'tenants', action: 'update', bindingMode: 'ALL_OF', method: 'PUT', path: '/tenants/:id', createdBy: '-1', updatedBy: '-1' },
     { id: 'binding-role-template-list-read', capabilityId: 'cap-platform-role-template-read', resource: 'role-templates', action: 'list', bindingMode: 'ANY_OF', method: 'GET', path: '/role-templates', createdBy: '-1', updatedBy: '-1' },
     { id: 'binding-role-template-list-manage', capabilityId: 'cap-platform-role-template-manage', resource: 'role-templates', action: 'list', bindingMode: 'ANY_OF', method: 'GET', path: '/role-templates', createdBy: '-1', updatedBy: '-1' },
     { id: 'binding-role-template-create', capabilityId: 'cap-platform-role-template-manage', resource: 'role-templates', action: 'create', bindingMode: 'ALL_OF', method: 'POST', path: '/role-templates', createdBy: '-1', updatedBy: '-1' },
@@ -12,6 +16,11 @@ export const initCapabilityApiBinding = async () => {
     { id: 'binding-capability-list-manage', capabilityId: 'cap-platform-capability-manage', resource: 'capabilities', action: 'list', bindingMode: 'ANY_OF', method: 'GET', path: '/capabilities', createdBy: '-1', updatedBy: '-1' },
     { id: 'binding-capability-create', capabilityId: 'cap-platform-capability-manage', resource: 'capabilities', action: 'create', bindingMode: 'ALL_OF', method: 'POST', path: '/capabilities', createdBy: '-1', updatedBy: '-1' },
     { id: 'binding-capability-update', capabilityId: 'cap-platform-capability-manage', resource: 'capabilities', action: 'update', bindingMode: 'ALL_OF', method: 'PUT', path: '/capabilities/:id', createdBy: '-1', updatedBy: '-1' },
+    { id: 'binding-route-list-read', capabilityId: 'cap-platform-resource-catalog-read', resource: 'routes', action: 'list', bindingMode: 'ANY_OF', method: 'GET', path: '/route', createdBy: '-1', updatedBy: '-1' },
+    { id: 'binding-route-list-manage', capabilityId: 'cap-platform-resource-catalog-manage', resource: 'routes', action: 'list', bindingMode: 'ANY_OF', method: 'GET', path: '/route', createdBy: '-1', updatedBy: '-1' },
+    { id: 'binding-route-create', capabilityId: 'cap-platform-resource-catalog-manage', resource: 'routes', action: 'create', bindingMode: 'ALL_OF', method: 'POST', path: '/route', createdBy: '-1', updatedBy: '-1' },
+    { id: 'binding-route-update', capabilityId: 'cap-platform-resource-catalog-manage', resource: 'routes', action: 'update', bindingMode: 'ALL_OF', method: 'PUT', path: '/route', createdBy: '-1', updatedBy: '-1' },
+    { id: 'binding-route-delete', capabilityId: 'cap-platform-resource-catalog-manage', resource: 'routes', action: 'delete', bindingMode: 'ALL_OF', method: 'DELETE', path: '/route/:id', createdBy: '-1', updatedBy: '-1' },
     { id: 'binding-role-list-read', capabilityId: 'cap-tenant-role-read', resource: 'roles', action: 'list', bindingMode: 'ANY_OF', method: 'GET', path: '/roles', createdBy: '-1', updatedBy: '-1' },
     { id: 'binding-role-list-manage', capabilityId: 'cap-tenant-role-manage', resource: 'roles', action: 'list', bindingMode: 'ANY_OF', method: 'GET', path: '/roles', createdBy: '-1', updatedBy: '-1' },
     { id: 'binding-role-list-reference', capabilityId: 'cap-tenant-role-reference-read', resource: 'roles', action: 'list', bindingMode: 'ANY_OF', method: 'GET', path: '/roles', createdBy: '-1', updatedBy: '-1' },

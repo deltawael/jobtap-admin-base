@@ -1,77 +1,88 @@
 <script setup lang="tsx">
-import { NButton, NPopconfirm, NTag } from 'naive-ui';
+import { NAvatar, NButton, NPopconfirm, NTag } from 'naive-ui';
 import { enableStatusRecord } from '@/constants/business';
-import { deleteRole, fetchGetRoleList } from '@/service/api';
+import { deleteUser, fetchGetUserList } from '@/service/api';
 import { useAppStore } from '@/store/modules/app';
+import { useSvgIcon } from '@/hooks/common/icon';
 import { useTable, useTableOperate } from '@/hooks/common/table';
-import {} from '@/locales';
-import RoleOperateDrawer from './modules/role-operate-drawer.vue';
-import RoleSearch from './modules/role-search.vue';
+import { $t } from '@/locales';
+import UserOperateDrawer from './modules/user-operate-drawer.vue';
+import UserSearch from './modules/user-search.vue';
+
+defineOptions({
+  name: 'TenantUserPage'
+});
 
 const appStore = useAppStore();
-const roleStatusTagMap = {
-  ENABLED: 'success',
-  DISABLED: 'warning'
-} as const;
+const { SvgIconVNode } = useSvgIcon();
 
 const {
   columns,
   columnChecks,
   data,
-  loading,
   getData,
   getDataByPage,
+  loading,
   mobilePagination,
   searchParams,
   resetSearchParams
 } = useTable({
-  apiFn: fetchGetRoleList,
-  apiParams: { current: 1, size: 10, status: null, name: null, code: null },
+  apiFn: fetchGetUserList,
+  showTotal: true,
+  apiParams: {
+    current: 1,
+    size: 10,
+    status: null,
+    username: null,
+    nickName: null,
+    phoneNumber: null,
+    email: null
+  },
   columns: () => [
     { type: 'selection', align: 'center', width: 48 },
-    { key: 'index', title: 'common.index', width: 64, align: 'center' },
-    { key: 'name', title: 'page.manage.role.roleName', align: 'center', minWidth: 140 },
-    { key: 'code', title: 'page.manage.role.roleCode', align: 'center', minWidth: 160 },
-    { key: 'templateName', title: '模板', align: 'center', minWidth: 140, render: row => row.templateName || '-' },
+    { key: 'index', title: $t('common.index'), align: 'center', width: 64 },
+    { key: 'username', title: $t('page.manage.user.userName'), align: 'center', minWidth: 120 },
     {
-      key: 'capabilityCount',
-      title: '能力数',
+      key: 'avatar',
+      title: $t('page.manage.user.avatar'),
       align: 'center',
-      width: 100,
-      render: row => <NTag type="info">{row.capabilityCount || 0}</NTag>
+      minWidth: 80,
+      render: row => (
+        <NAvatar size="small" src={row.avatar || undefined}>
+          {SvgIconVNode({ icon: 'ph:user-circle', fontSize: 18 })}
+        </NAvatar>
+      )
     },
-    {
-      key: 'scopePolicyCount',
-      title: 'Scope数',
-      align: 'center',
-      width: 100,
-      render: row => <NTag type="warning">{row.scopePolicyCount || 0}</NTag>
-    },
-    { key: 'description', title: 'page.manage.role.roleDesc', minWidth: 180 },
+    { key: 'nickName', title: $t('page.manage.user.nickName'), align: 'center', minWidth: 120 },
+    { key: 'phoneNumber', title: $t('page.manage.user.userPhone'), align: 'center', width: 140 },
+    { key: 'email', title: $t('page.manage.user.userEmail'), align: 'center', minWidth: 220 },
     {
       key: 'status',
-      title: 'page.manage.role.roleStatus',
+      title: $t('page.manage.user.userStatus'),
       align: 'center',
       width: 100,
-      render: row =>
-        row.status === null ? null : <NTag type={roleStatusTagMap[row.status]}>{enableStatusRecord[row.status]}</NTag>
+      render: row => {
+        if (row.status === null) return null;
+        const tagMap: Record<Api.Common.EnableStatus, NaiveUI.ThemeColor> = { ENABLED: 'success', DISABLED: 'warning' };
+        return <NTag type={tagMap[row.status]}>{$t(enableStatusRecord[row.status])}</NTag>;
+      }
     },
     {
       key: 'operate',
-      title: 'common.operate',
+      title: $t('common.operate'),
       align: 'center',
-      minWidth: 140,
+      width: 130,
       render: row => (
         <div class="flex-center gap-8px">
           <NButton type="primary" ghost size="small" onClick={() => edit(row.id)}>
-            {'common.edit'}
+            {$t('common.edit')}
           </NButton>
           <NPopconfirm onPositiveClick={() => handleDelete(row.id)}>
             {{
-              default: () => 'common.confirmDelete',
+              default: () => $t('common.confirmDelete'),
               trigger: () => (
-                <NButton type="error" ghost size="small" disabled={row.builtIn}>
-                  {'common.delete'}
+                <NButton type="error" ghost size="small">
+                  {$t('common.delete')}
                 </NButton>
               )
             }}
@@ -90,7 +101,7 @@ async function handleBatchDelete() {
 }
 
 async function handleDelete(id: string) {
-  const { error } = await deleteRole(id);
+  const { error } = await deleteUser(id);
   if (error) return;
   await onDeleted();
 }
@@ -102,8 +113,8 @@ function edit(id: string) {
 
 <template>
   <div class="min-h-500px flex-col-stretch gap-16px overflow-hidden lt-sm:overflow-auto">
-    <RoleSearch v-model:model="searchParams" @reset="resetSearchParams" @search="getDataByPage" />
-    <NCard title="角色管理" :bordered="false" size="small" class="sm:flex-1-hidden card-wrapper">
+    <UserSearch v-model:model="searchParams" @reset="resetSearchParams" @search="getDataByPage" />
+    <NCard :title="$t('page.manage.user.title')" :bordered="false" size="small" class="sm:flex-1-hidden card-wrapper">
       <template #header-extra>
         <TableHeaderOperation
           v-model:columns="columnChecks"
@@ -120,14 +131,14 @@ function edit(id: string) {
         :data="data"
         size="small"
         :flex-height="!appStore.isMobile"
-        :scroll-x="980"
+        :scroll-x="962"
         :loading="loading"
         remote
         :row-key="row => row.id"
         :pagination="mobilePagination"
         class="sm:h-full"
       />
-      <RoleOperateDrawer
+      <UserOperateDrawer
         v-model:visible="drawerVisible"
         :operate-type="operateType"
         :row-data="editingData"

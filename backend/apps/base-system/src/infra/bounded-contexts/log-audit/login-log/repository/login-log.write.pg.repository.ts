@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { LoginLogEntity } from '@app/base-system/lib/bounded-contexts/log-audit/login-log/domain/login-log.entity';
 import { LoginLogWriteRepoPort } from '@app/base-system/lib/bounded-contexts/log-audit/login-log/ports/login-log.write.repo-port';
 
+import { BUILT_IN } from '@lib/shared/prisma/db.constant';
 import { PrismaService } from '@lib/shared/prisma/prisma.service';
 
 @Injectable()
@@ -14,7 +15,7 @@ export class LoginLogWriteRepository implements LoginLogWriteRepoPort {
       data: {
         userId: loginLog.userId,
         username: loginLog.username,
-        domain: loginLog.domain,
+        domain: loginLog.tenantId ?? BUILT_IN,
         loginTime: new Date(),
         ip: loginLog.ip,
         port: loginLog.port,

@@ -29,6 +29,8 @@ interface Props {
   rowData?: Api.SystemManage.Menu | null;
   /** all pages */
   allPages: string[];
+  /** all route names */
+  allRouteNames: string[];
 }
 
 const props = defineProps<Props>();
@@ -122,16 +124,27 @@ const showPage = computed(() => model.menuType === 'menu');
 const pageOptions = computed(() => {
   const allPages = [...props.allPages];
 
-  if (model.routeName && !allPages.includes(model.routeName)) {
-    allPages.unshift(model.routeName);
+  if (model.page && !allPages.includes(model.page)) {
+    allPages.unshift(model.page);
   }
 
-  const opts: CommonType.Option[] = allPages.map(page => ({
+  return allPages.map<CommonType.Option>(page => ({
     label: page,
     value: page
   }));
+});
 
-  return opts;
+const routeNameOptions = computed(() => {
+  const routeNames = [...props.allRouteNames];
+
+  if (model.routeName && !routeNames.includes(model.routeName)) {
+    routeNames.unshift(model.routeName);
+  }
+
+  return routeNames.map<CommonType.Option>(routeName => ({
+    label: routeName,
+    value: routeName
+  }));
 });
 
 const layoutOptions: CommonType.Option[] = [
@@ -263,7 +276,12 @@ watch(
             <NInput v-model:value="model.menuName" :placeholder="$t('page.manage.menu.form.menuName')" />
           </NFormItemGi>
           <NFormItemGi span="24 m:12" :label="$t('page.manage.menu.routeName')" path="routeName">
-            <NInput v-model:value="model.routeName" :placeholder="$t('page.manage.menu.form.routeName')" />
+            <NSelect
+              v-model:value="model.routeName"
+              :options="routeNameOptions"
+              filterable
+              :placeholder="$t('page.manage.menu.form.routeName')"
+            />
           </NFormItemGi>
           <NFormItemGi span="24 m:12" :label="$t('page.manage.menu.routePath')" path="routePath">
             <NInput v-model:value="model.routePath" disabled :placeholder="$t('page.manage.menu.form.routePath')" />
@@ -356,8 +374,9 @@ watch(
           >
             <NSelect
               v-model:value="model.activeMenu"
-              :options="pageOptions"
+              :options="routeNameOptions"
               clearable
+              filterable
               :placeholder="$t('page.manage.menu.form.activeMenu')"
             />
           </NFormItemGi>

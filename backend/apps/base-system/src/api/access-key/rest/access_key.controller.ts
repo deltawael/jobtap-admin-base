@@ -21,7 +21,6 @@ import { PageAccessKeysQuery } from '@app/base-system/lib/bounded-contexts/acces
 
 import { ApiResponseDoc } from '@lib/infra/decorators/api-result.decorator';
 import { ApiRes } from '@lib/infra/rest/res.response';
-import { BUILT_IN } from '@lib/shared/prisma/db.constant';
 import { PaginationResult } from '@lib/shared/prisma/pagination';
 
 import { AccessKeyCreateDto } from '../dto/access_key.dto';
@@ -47,7 +46,10 @@ export class AccessKeyController {
     const query = new PageAccessKeysQuery({
       current: queryDto.current,
       size: queryDto.size,
-      domain: req.user.domain === BUILT_IN ? queryDto.domain : req.user.domain,
+      tenantId:
+        req.user.actorType === 'system_admin'
+          ? (queryDto.tenantId ?? null)
+          : (req.user.tenantId ?? null),
       status: queryDto.status,
     });
     const result = await this.queryBus.execute<
@@ -68,12 +70,13 @@ export class AccessKeyController {
     @Body() dto: AccessKeyCreateDto,
     @Request() req: any,
   ): Promise<ApiRes<null>> {
+    const tenantId =
+      req.user.actorType === 'system_admin'
+        ? (dto.tenantId ?? null)
+        : (req.user.tenantId ?? null);
+
     await this.commandBus.execute(
-      new AccessKeyCreateCommand(
-        req.user.domain === BUILT_IN ? dto.domain : req.user.domain,
-        dto.description,
-        req.user.uid,
-      ),
+      new AccessKeyCreateCommand(tenantId, dto.description, req.user.uid),
     );
     return ApiRes.ok();
   }

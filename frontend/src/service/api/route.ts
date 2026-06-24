@@ -7,7 +7,7 @@ export function fetchGetConstantRoutes() {
 
 /** get user routes */
 export function fetchGetUserRoutes() {
-  return request<Api.Route.UserRoute>({ url: '/authorization/getUserRoutes' });
+  return request<Api.Route.UserRoute>({ url: '/authz/routes' });
 }
 
 /**

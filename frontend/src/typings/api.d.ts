@@ -38,7 +38,16 @@ declare namespace Api {
       tenantId: string | null;
       actorType: 'system_admin' | 'tenant_admin' | 'tenant_user';
       roles: string[];
-      buttons: string[];
+      capabilities: string[];
+      visibleViews: Array<
+        | string
+        | {
+            capabilityId: string;
+            capabilityCode: string | null;
+            resourceType: string;
+            viewKey: string;
+          }
+      >;
     }
   }
 
@@ -136,8 +145,6 @@ declare namespace Api {
       roleIds: string[];
       scopeOverrides: ScopeOverride[];
     };
-    type RoleMenu = { roleId: string; routeIds: number[] };
-    type RolePermission = { roleId: string; permissions: string[] };
     type RoleSearchParams = CommonType.RecordNullable<
       Pick<Api.SystemManage.Role, 'name' | 'code' | 'status'> & CommonSearchParams
     >;
@@ -147,7 +154,6 @@ declare namespace Api {
     type User = Common.CommonRecord<{
       username: string;
       password: string;
-      domain: string;
       tenantId: string | null;
       avatar: string | null;
       nickName: string;
@@ -190,16 +196,6 @@ declare namespace Api {
       MenuPropsOfRoute;
     type MenuList = Common.PaginatingQueryRecord<Menu>;
     type MenuTree = { id: number; label: string; pid: number; children?: MenuTree[] };
-    type ApiEndpoint = Common.CommonRecord<{
-      path: string;
-      method: string;
-      action: string;
-      resource: string;
-      controller: string;
-      summary: string | null;
-      children?: ApiEndpoint[] | null;
-    }>;
-    type ApiEndpointTree = { id: string; label: string; children?: ApiEndpointTree[] };
     type AuditLog = Common.CommonRecord<{
       tenantId: string | null;
       actorUserId: string;

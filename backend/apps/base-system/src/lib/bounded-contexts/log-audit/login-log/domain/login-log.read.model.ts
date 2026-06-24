@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export type LoginLogEssentialProperties = Readonly<
   Required<{
     username: string;
-    domain: string;
+    tenantId: string | null;
     loginTime: Date;
     ip: string;
     port: number | null;
@@ -21,8 +21,8 @@ export class LoginLogReadModel {
   @ApiProperty({ description: 'Username associated with the login event' })
   username: string;
 
-  @ApiProperty({ description: 'Domain where the login occurred' })
-  domain: string;
+  @ApiProperty({ description: 'Tenant ID associated with the login event', nullable: true })
+  tenantId: string | null;
 
   @ApiProperty({
     description: 'Time when the login occurred',

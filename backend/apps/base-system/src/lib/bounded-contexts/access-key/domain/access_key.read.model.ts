@@ -6,7 +6,7 @@ import { CreationAuditInfoProperties } from '@lib/typings/global';
 export type AccessKeyEssentialProperties = Readonly<
   Required<{
     id: string;
-    domain: string;
+    tenantId: string | null;
     AccessKeyID: string;
     AccessKeySecret: string;
     status: Status;
@@ -27,8 +27,8 @@ export class AccessKeyReadModel {
   @ApiProperty({ description: 'The unique identifier of the AccessKey' })
   id: string;
 
-  @ApiProperty({ description: 'domain of the AccessKey' })
-  domain: string;
+  @ApiProperty({ description: 'Tenant ID associated with the AccessKey', nullable: true })
+  tenantId: string | null;
 
   @ApiProperty({ description: 'AccessKeyID of the AccessKey' })
   AccessKeyID: string;

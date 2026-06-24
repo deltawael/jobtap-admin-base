@@ -3,7 +3,7 @@ import { computed, reactive } from 'vue';
 import { brandConfig } from '@/config/brand';
 import { useAuthStore } from '@/store/modules/auth';
 import { useFormRules, useNaiveForm } from '@/hooks/common/form';
-import { $t } from '@/locales';
+import {} from '@/locales';
 
 defineOptions({
   name: 'PwdLogin'
@@ -12,6 +12,7 @@ defineOptions({
 const authStore = useAuthStore();
 const { formRef, validate } = useNaiveForm();
 const showDemoAccounts = brandConfig.login.showDemoAccounts;
+const defaultDemoAccount = brandConfig.demoAccounts.systemAdmin;
 
 interface FormModel {
   identifier: string;
@@ -19,8 +20,8 @@ interface FormModel {
 }
 
 const model: FormModel = reactive({
-  identifier: showDemoAccounts ? brandConfig.demoAccounts.super.identifier : '',
-  password: showDemoAccounts ? '123456' : ''
+  identifier: showDemoAccounts ? defaultDemoAccount.identifier : '',
+  password: showDemoAccounts ? defaultDemoAccount.password : ''
 });
 
 const rules = computed<Record<keyof FormModel, App.Global.FormRule[]>>(() => {
@@ -37,7 +38,7 @@ async function handleSubmit() {
   await authStore.login(model.identifier, model.password);
 }
 
-type AccountKey = 'super' | 'admin' | 'user';
+type AccountKey = keyof typeof brandConfig.demoAccounts;
 
 interface Account {
   key: AccountKey;
@@ -48,22 +49,22 @@ interface Account {
 
 const accounts = computed<Account[]>(() => [
   {
-    key: 'super',
-    label: $t('page.login.pwdLogin.superAdmin'),
-    identifier: brandConfig.demoAccounts.super.identifier,
-    password: '123456'
+    key: 'systemAdmin',
+    label: 'page.login.pwdLogin.systemAdmin',
+    identifier: brandConfig.demoAccounts.systemAdmin.identifier,
+    password: brandConfig.demoAccounts.systemAdmin.password
   },
   {
-    key: 'admin',
-    label: $t('page.login.pwdLogin.admin'),
-    identifier: brandConfig.demoAccounts.admin.identifier,
-    password: '123456'
+    key: 'tenantAdminA',
+    label: 'page.login.pwdLogin.tenantAdminA',
+    identifier: brandConfig.demoAccounts.tenantAdminA.identifier,
+    password: brandConfig.demoAccounts.tenantAdminA.password
   },
   {
-    key: 'user',
-    label: $t('page.login.pwdLogin.user'),
-    identifier: brandConfig.demoAccounts.user.identifier,
-    password: '123456'
+    key: 'tenantAdminB',
+    label: 'page.login.pwdLogin.tenantAdminB',
+    identifier: brandConfig.demoAccounts.tenantAdminB.identifier,
+    password: brandConfig.demoAccounts.tenantAdminB.password
   }
 ]);
 
@@ -75,25 +76,25 @@ async function handleAccountLogin(account: Account) {
 <template>
   <NForm ref="formRef" :model="model" :rules="rules" size="large" :show-label="false" @keyup.enter="handleSubmit">
     <NFormItem path="identifier">
-      <NInput v-model:value="model.identifier" :placeholder="$t('page.login.common.userNamePlaceholder')" />
+      <NInput v-model:value="model.identifier" placeholder="page.login.common.userNamePlaceholder" />
     </NFormItem>
     <NFormItem path="password">
       <NInput
         v-model:value="model.password"
         type="password"
         show-password-on="click"
-        :placeholder="$t('page.login.common.passwordPlaceholder')"
+        placeholder="page.login.common.passwordPlaceholder"
       />
     </NFormItem>
     <NSpace vertical :size="24">
       <div class="flex-y-center">
-        <NCheckbox>{{ $t('page.login.pwdLogin.rememberMe') }}</NCheckbox>
+        <NCheckbox>page.login.pwdLogin.rememberMe</NCheckbox>
       </div>
       <NButton type="primary" size="large" round block :loading="authStore.loginLoading" @click="handleSubmit">
-        {{ $t('common.confirm') }}
+        common.confirm
       </NButton>
       <template v-if="showDemoAccounts">
-        <NDivider class="text-14px text-#666 !m-0">{{ $t('page.login.pwdLogin.otherAccountLogin') }}</NDivider>
+        <NDivider class="text-14px text-#666 !m-0">page.login.pwdLogin.otherAccountLogin</NDivider>
         <div class="flex-center gap-12px">
           <NButton v-for="item in accounts" :key="item.key" type="primary" @click="handleAccountLogin(item)">
             {{ item.label }}

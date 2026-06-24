@@ -2,7 +2,6 @@ export interface IAuthentication {
   uid: string;
   userId: string;
   username: string;
-  domain: string;
   tenantId: string | null;
   actorType: 'system_admin' | 'tenant_admin' | 'tenant_user';
 }
@@ -26,4 +25,3 @@ export type UpdateAuditInfoProperties = Readonly<{
   updatedAt: Date | null;
   updatedBy: string | null;
 }>;
-

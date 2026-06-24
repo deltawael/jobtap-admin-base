@@ -35,7 +35,7 @@ export class LogInterceptor implements NestInterceptor {
 
     const request = context.switchToHttp().getRequest();
 
-    const { uid, username, domain }: IAuthentication = context
+    const { uid, username, tenantId }: IAuthentication = context
       .switchToHttp()
       .getRequest().user;
 
@@ -44,13 +44,13 @@ export class LogInterceptor implements NestInterceptor {
     const startTime = new Date();
 
     return next.handle().pipe(
-      tap((data) => {
+      tap(data => {
         const endTime = new Date();
         const duration = endTime.getTime() - startTime.getTime();
         const operationLog: OperationLogProperties = {
           userId: uid,
-          username: username,
-          domain: domain,
+          username,
+          tenantId,
           moduleName,
           description,
           requestId: 'TODO',

@@ -9,13 +9,25 @@ export function useAuth() {
     }
 
     if (typeof codes === 'string') {
-      return authStore.userInfo.buttons.includes(codes);
+      return authStore.userInfo.capabilities.includes(codes);
     }
 
-    return codes.some(code => authStore.userInfo.buttons.includes(code));
+    return codes.some(code => authStore.userInfo.capabilities.includes(code));
+  }
+
+  function hasView(viewKey: string) {
+    if (!authStore.isLogin) {
+      return false;
+    }
+
+    return authStore.userInfo.visibleViews.some(view => {
+      if (typeof view === 'string') return view === viewKey;
+      return view.viewKey === viewKey;
+    });
   }
 
   return {
-    hasAuth
+    hasAuth,
+    hasView
   };
 }

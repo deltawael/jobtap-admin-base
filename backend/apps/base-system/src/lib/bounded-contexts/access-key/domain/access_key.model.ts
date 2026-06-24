@@ -11,12 +11,13 @@ export interface IAccessKey {
 
 export class AccessKey extends AggregateRoot implements IAccessKey {
   id: string;
-  domain: string;
+  tenantId: string | null;
   AccessKeyID: string;
   AccessKeySecret: string;
   status: Status;
   createdAt: Date;
   createdBy: string;
+  description?: string | null;
 
   static fromProp(properties: AccessKeyProperties): AccessKey {
     return Object.assign(new AccessKey(), properties);
@@ -25,7 +26,7 @@ export class AccessKey extends AggregateRoot implements IAccessKey {
   async created() {
     this.apply(
       new AccessKeyCreatedEvent(
-        this.domain,
+        this.tenantId,
         this.AccessKeyID,
         this.AccessKeySecret,
         this.status,
@@ -36,7 +37,7 @@ export class AccessKey extends AggregateRoot implements IAccessKey {
   async deleted() {
     this.apply(
       new AccessKeyDeletedEvent(
-        this.domain,
+        this.tenantId,
         this.AccessKeyID,
         this.AccessKeySecret,
         this.status,

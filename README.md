@@ -8,6 +8,7 @@
 - 多租户模型：`单库共享表 + tenant_id 强隔离`
 - 授权主模型：`capability + scope + delegation`
 - 菜单、按钮、接口、视图块都只是 capability 的投影
+- 动态路由来源：`GET /authz/routes` + `capability_ui_bindings`
 - 不再保留旧的“角色直配菜单 / 角色直配 API”作为主授权模型
 - 数据库基线统一为 `backend/prisma/migrations/0_target_state_baseline`
 

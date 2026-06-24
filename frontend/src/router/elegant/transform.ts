@@ -173,18 +173,16 @@ const routeMap: RouteMap = {
   "log_login": "/log/login",
   "log_operation": "/log/operation",
   "login": "/login/:module(pwd-login|code-login|register|reset-pwd|bind-wechat)?",
-  "manage": "/manage",
-  "manage_menu": "/manage/menu",
-  "manage_role": "/manage/role",
-  "manage_user": "/manage/user",
-  "manage_user-detail": "/manage/user-detail/:id",
   "platform": "/platform",
   "platform_audit": "/platform/audit",
   "platform_capability": "/platform/capability",
+  "platform_resource-catalog": "/platform/resource-catalog",
   "platform_role-template": "/platform/role-template",
   "platform_tenant": "/platform/tenant",
   "tenant": "/tenant",
   "tenant_audit": "/tenant/audit",
+  "tenant_role": "/tenant/role",
+  "tenant_user": "/tenant/user",
   "tenant_user-auth-profile": "/tenant/user-auth-profile"
 };
 
@@ -207,3 +205,5 @@ export function getRouteName(path: RoutePath) {
 
   return routeName;
 }
+
+

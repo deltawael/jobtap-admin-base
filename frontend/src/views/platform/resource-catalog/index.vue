@@ -4,17 +4,23 @@ import { NButton, NPopconfirm, NTag } from 'naive-ui';
 import { useBoolean } from '@sa/hooks';
 import { yesOrNoRecord } from '@/constants/common';
 import { enableStatusRecord, menuTypeRecord } from '@/constants/business';
-import { deleteRoute, fetchGetAllPages, fetchGetMenuList } from '@/service/api';
+import { deleteRoute, fetchGetMenuList } from '@/service/api';
 import { useAppStore } from '@/store/modules/app';
 import { useTable, useTableOperate } from '@/hooks/common/table';
+import { generatedRoutes } from '@/router/elegant/routes';
 import { $t } from '@/locales';
 import SvgIcon from '@/components/custom/svg-icon.vue';
 import MenuOperateModal, { type OperateType } from './modules/menu-operate-modal.vue';
+
+defineOptions({
+  name: 'PlatformResourceCatalogPage'
+});
 
 const appStore = useAppStore();
 const { bool: visible, setTrue: openModal } = useBoolean();
 const operateType = ref<OperateType>('add');
 const allPages = ref<string[]>([]);
+const allRouteNames = ref<string[]>([]);
 const editingData: Ref<Api.SystemManage.Menu | null> = ref(null);
 
 const menuTypeTagMap = {
@@ -102,15 +108,44 @@ const menuColumns = [
   }
 ];
 
-const { columns, columnChecks, data, loading, getData, getDataByPage, mobilePagination } = useTable({
+const {
+  columns,
+  columnChecks,
+  data: tableData,
+  loading,
+  getData,
+  getDataByPage,
+  mobilePagination
+} = useTable({
   apiFn: fetchGetMenuList,
   apiParams: { current: 1, size: 999 },
   columns: () => menuColumns as any
 });
 
-async function loadPages() {
-  const { data: pageList } = await fetchGetAllPages();
-  allPages.value = pageList || [];
+type LocalRoute = {
+  name: string;
+  component?: string;
+  children?: LocalRoute[];
+};
+
+function flattenRoutes(routes: LocalRoute[], result: LocalRoute[] = []) {
+  routes.forEach(route => {
+    result.push(route);
+    if (route.children?.length) {
+      flattenRoutes(route.children, result);
+    }
+  });
+
+  return result;
+}
+
+function initRouteOptions() {
+  const routes = flattenRoutes(generatedRoutes as unknown as LocalRoute[]);
+  allRouteNames.value = routes.map(route => route.name);
+  allPages.value = routes
+    .filter(route => route.component?.startsWith('view.'))
+    .map(route => route.component)
+    .filter((page, index, pages) => Boolean(page) && pages.indexOf(page) === index) as string[];
 }
 
 async function handleDelete(id: number) {
@@ -137,9 +172,9 @@ function handleEdit(item: Api.SystemManage.Menu) {
   openModal();
 }
 
-const { checkedRowKeys } = useTableOperate(data, getData);
+const { checkedRowKeys } = useTableOperate(tableData, getData);
 
-onMounted(loadPages);
+onMounted(initRouteOptions);
 </script>
 
 <template>
@@ -157,7 +192,7 @@ onMounted(loadPages);
       <NDataTable
         v-model:checked-row-keys="checkedRowKeys"
         :columns="columns"
-        :data="data"
+        :data="tableData"
         size="small"
         :flex-height="!appStore.isMobile"
         :loading="loading"
@@ -171,6 +206,7 @@ onMounted(loadPages);
         :operate-type="operateType"
         :row-data="editingData"
         :all-pages="allPages"
+        :all-route-names="allRouteNames"
         @submitted="getDataByPage"
       />
     </NCard>

@@ -114,53 +114,6 @@ export const generatedRoutes: GeneratedRoute[] = [
     }
   },
   {
-    name: 'manage',
-    path: '/manage',
-    component: 'layout.base',
-    meta: {
-      title: 'manage',
-      i18nKey: 'route.manage'
-    },
-    children: [
-      {
-        name: 'manage_menu',
-        path: '/manage/menu',
-        component: 'view.manage_menu',
-        meta: {
-          title: 'manage_menu',
-          i18nKey: 'route.manage_menu'
-        }
-      },
-      {
-        name: 'manage_role',
-        path: '/manage/role',
-        component: 'view.manage_role',
-        meta: {
-          title: 'manage_role',
-          i18nKey: 'route.manage_role'
-        }
-      },
-      {
-        name: 'manage_user',
-        path: '/manage/user',
-        component: 'view.manage_user',
-        meta: {
-          title: 'manage_user',
-          i18nKey: 'route.manage_user'
-        }
-      },
-      {
-        name: 'manage_user-detail',
-        path: '/manage/user-detail/:id',
-        component: 'view.manage_user-detail',
-        meta: {
-          title: 'manage_user-detail',
-          i18nKey: 'route.manage_user-detail'
-        }
-      }
-    ]
-  },
-  {
     name: 'platform',
     path: '/platform',
     component: 'layout.base',
@@ -185,6 +138,15 @@ export const generatedRoutes: GeneratedRoute[] = [
         meta: {
           title: 'platform_capability',
           i18nKey: 'route.platform_capability'
+        }
+      },
+      {
+        name: 'platform_resource-catalog',
+        path: '/platform/resource-catalog',
+        component: 'view.platform_resource-catalog',
+        meta: {
+          title: 'platform_resource-catalog',
+          i18nKey: 'route.platform_resource-catalog'
         }
       },
       {
@@ -226,6 +188,24 @@ export const generatedRoutes: GeneratedRoute[] = [
         }
       },
       {
+        name: 'tenant_user',
+        path: '/tenant/user',
+        component: 'view.tenant_user',
+        meta: {
+          title: 'tenant_user',
+          i18nKey: 'route.tenant_user'
+        }
+      },
+      {
+        name: 'tenant_role',
+        path: '/tenant/role',
+        component: 'view.tenant_role',
+        meta: {
+          title: 'tenant_role',
+          i18nKey: 'route.tenant_role'
+        }
+      },
+      {
         name: 'tenant_user-auth-profile',
         path: '/tenant/user-auth-profile',
         component: 'view.tenant_user-auth-profile',
@@ -237,3 +217,4 @@ export const generatedRoutes: GeneratedRoute[] = [
     ]
   }
 ];
+

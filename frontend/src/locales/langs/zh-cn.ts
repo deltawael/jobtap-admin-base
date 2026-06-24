@@ -167,17 +167,15 @@ const local: App.I18n.Schema = {
     500: '服务器错误',
     'iframe-page': '外链页面',
     home: '首页',
-    manage: '系统管理',
-    manage_user: '用户管理',
-    'manage_user-detail': '用户详情',
-    manage_role: '角色管理',
-    manage_menu: '菜单管理',
     platform: '平台管理',
     platform_tenant: '租户管理',
     'platform_role-template': '角色模板',
     platform_capability: '能力目录',
+    'platform_resource-catalog': '资源目录',
     platform_audit: '平台审计',
     tenant: '租户管理',
+    tenant_user: '用户管理',
+    tenant_role: '角色管理',
     'tenant_user-auth-profile': '用户授权档案',
     tenant_audit: '租户审计',
     'access-key': '访问密钥',
@@ -197,9 +195,9 @@ const local: App.I18n.Schema = {
         title: '密码登录',
         rememberMe: '记住我',
         otherAccountLogin: '其他账号登录',
-        superAdmin: '超级管理员',
-        admin: '管理员',
-        user: '普通用户'
+        systemAdmin: '平台管理员',
+        tenantAdminA: '租户A管理员',
+        tenantAdminB: '租户B管理员'
       }
     },
     home: {
@@ -244,9 +242,6 @@ const local: App.I18n.Schema = {
         roleCode: '角色编码',
         roleStatus: '角色状态',
         roleDesc: '角色描述',
-        menuAuth: '菜单权限',
-        buttonAuth: '按钮权限',
-        permissionAuth: 'API权限',
         form: {
           roleName: '请输入角色名称',
           roleCode: '请输入角色编码',

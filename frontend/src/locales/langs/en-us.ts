@@ -167,17 +167,15 @@ const local: App.I18n.Schema = {
     500: 'Server Error',
     'iframe-page': 'Iframe',
     home: 'Home',
-    manage: 'System Manage',
-    manage_user: 'User Manage',
-    'manage_user-detail': 'User Detail',
-    manage_role: 'Role Manage',
-    manage_menu: 'Menu Manage',
     platform: 'Platform Manage',
     platform_tenant: 'Tenant Manage',
     'platform_role-template': 'Role Templates',
     platform_capability: 'Capability Catalog',
+    'platform_resource-catalog': 'Resource Catalog',
     platform_audit: 'Platform Audit',
     tenant: 'Tenant Manage',
+    tenant_user: 'User Manage',
+    tenant_role: 'Role Manage',
     'tenant_user-auth-profile': 'User Auth Profile',
     tenant_audit: 'Tenant Audit',
     'access-key': 'AccessKey',
@@ -197,9 +195,9 @@ const local: App.I18n.Schema = {
         title: 'Password Login',
         rememberMe: 'Remember me',
         otherAccountLogin: 'Other Account Login',
-        superAdmin: 'Super Admin',
-        admin: 'Admin',
-        user: 'User'
+        systemAdmin: 'Platform Admin',
+        tenantAdminA: 'Tenant A Admin',
+        tenantAdminB: 'Tenant B Admin'
       }
     },
     home: {
@@ -244,9 +242,6 @@ const local: App.I18n.Schema = {
         roleCode: 'Role Code',
         roleStatus: 'Role Status',
         roleDesc: 'Role Description',
-        menuAuth: 'Menu Auth',
-        buttonAuth: 'Button Auth',
-        permissionAuth: 'API Auth',
         form: {
           roleName: 'Please enter role name',
           roleCode: 'Please enter role code',

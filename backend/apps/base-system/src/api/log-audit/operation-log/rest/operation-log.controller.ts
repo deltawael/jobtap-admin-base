@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Query,
+  Request,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -43,12 +44,14 @@ export class OperationLogController {
   @ApiResponseDoc({ type: OperationLogReadModel, isPaged: true })
   async page(
     @Query() queryDto: PageOperationLogsQueryDto,
+    @Request() req: any,
   ): Promise<ApiRes<PaginationResult<OperationLogProperties>>> {
     const query = new PageOperationLogsQuery({
       current: queryDto.current,
       size: queryDto.size,
       username: queryDto.username,
-      domain: queryDto.domain,
+      tenantId:
+        req.user.actorType === 'system_admin' ? queryDto.tenantId : req.user.tenantId,
       moduleName: queryDto.moduleName,
       method: queryDto.method,
     });

@@ -26,7 +26,8 @@ export const useAuthStore = defineStore(SetupStoreId.Auth, () => {
     tenantId: null,
     actorType: 'tenant_user',
     roles: [],
-    buttons: []
+    capabilities: [],
+    visibleViews: []
   });
 
   /** is super role in static route */

@@ -4,7 +4,7 @@ import { PaginationParams } from '@lib/shared/prisma/pagination';
 
 export class PageLoginLogsQuery extends PaginationParams implements IQuery {
   readonly username?: string;
-  readonly domain?: string;
+  readonly tenantId?: string;
   readonly address?: string;
   readonly type?: string;
   constructor(options: PageLoginLogsQuery) {

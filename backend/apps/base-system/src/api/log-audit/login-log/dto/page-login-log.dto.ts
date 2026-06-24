@@ -12,9 +12,9 @@ export class PageLoginLogsQueryDto extends PaginationParams {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsString({ message: 'domain must be a string' })
-  @IsNotEmpty({ message: 'domain cannot be empty' })
-  domain?: string;
+  @IsString({ message: 'tenantId must be a string' })
+  @IsNotEmpty({ message: 'tenantId cannot be empty' })
+  tenantId?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

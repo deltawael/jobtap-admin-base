@@ -10,9 +10,7 @@ defineOptions({
 });
 
 interface Props {
-  /** the type of operation */
   operateType: NaiveUI.TableOperateType;
-  /** the edit row data */
   rowData?: Access.AccessKey | null;
 }
 
@@ -43,16 +41,16 @@ const model: Access.AccessKeyModel = reactive(createDefaultModel());
 
 function createDefaultModel(): Access.AccessKeyModel {
   return {
-    domain: '',
+    tenantId: '',
     status: 'ENABLED',
     description: null
   };
 }
 
-type RuleKey = Extract<keyof Access.AccessKeyModel, 'domain' | 'AccessKeyID' | 'AccessKeySecret'>;
+type RuleKey = Extract<keyof Access.AccessKeyModel, 'tenantId'>;
 
 const rules: Record<RuleKey, App.Global.FormRule> = {
-  domain: defaultRequiredRule
+  tenantId: defaultRequiredRule
 };
 
 function handleInitModel() {
@@ -69,7 +67,6 @@ function closeDrawer() {
 
 async function handleSubmit() {
   await validate();
-  // request
   if (props.operateType === 'add') {
     const { error } = await createAccessKey(model);
     if (error) return;
@@ -87,7 +84,6 @@ watch(visible, () => {
   if (visible.value) {
     handleInitModel();
     restoreValidation();
-    // getRoleOptions();
   }
 });
 </script>
@@ -96,10 +92,10 @@ watch(visible, () => {
   <NDrawer v-model:show="visible" display-directive="show" :width="360">
     <NDrawerContent :title="title" :native-scrollbar="false" closable>
       <NForm ref="formRef" :model="model" :rules="rules">
-        <NFormItem label="domain" path="domain">
-          <NInput v-model:value="model.domain" />
+        <NFormItem label="租户ID" path="tenantId">
+          <NInput v-model:value="model.tenantId" />
         </NFormItem>
-        <NFormItem label="status" path="status">
+        <NFormItem label="状态" path="status">
           <NRadioGroup v-model:value="model.status">
             <NRadio v-for="item in enableStatusOptions" :key="item.value" :value="item.value" :label="$t(item.label)" />
           </NRadioGroup>

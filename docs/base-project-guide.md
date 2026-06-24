@@ -86,6 +86,9 @@
 
 能力目录维护业务意图能力，例如：
 
+- 前端按 capability code 投影 3 级树：模块 / 业务分组 / 叶子能力。
+- 角色模板与角色配置只保存叶子 capability id，不保存虚拟分组节点。
+
 - `tenant.role.read`
 - `tenant.role.manage`
 - `tenant.user.read`
@@ -102,6 +105,9 @@
 - API 资源
 
 这些资源允许绑定 capability，但不允许反过来成为主授权源。
+
+- 菜单与路由可见性由 `capability_ui_bindings` 投影。
+- 资源目录页面候选项来自前端已注册路由清单，不再依赖旧 `systemManage/getAllPages`。
 
 ### 5.3 用户授权档案
 

@@ -44,9 +44,12 @@ export class AuthenticationService {
       throw new NotFoundException('Refresh token not found.');
     }
 
-    await this.jwtService.verifyAsync(tokenDetails.refreshToken, {
-      secret: this.securityConfig.refreshJwtSecret,
-    });
+    const payload = await this.jwtService.verifyAsync<IAuthentication>(
+      tokenDetails.refreshToken,
+      {
+        secret: this.securityConfig.refreshJwtSecret,
+      },
+    );
 
     const tokensAggregate = new TokensEntity(tokenDetails);
 
@@ -55,9 +58,8 @@ export class AuthenticationService {
     const tokens = await this.generateAccessToken(
       tokensAggregate.userId,
       tokenDetails.username,
-      tokenDetails.domain,
-      null,
-      tokenDetails.domain === 'built-in' ? 'system_admin' : 'tenant_user',
+      payload.tenantId ?? null,
+      payload.actorType ?? this.resolveActorTypeFromTenantId(payload.tenantId ?? null),
     );
 
     tokensAggregate.apply(
@@ -97,19 +99,21 @@ export class AuthenticationService {
       throw new BadRequestException(loginResult.message);
     }
 
+    const tenantId = (user as any).tenantId ?? null;
+    const actorType = this.resolveActorType(user as any);
+
     const tokens = await this.generateAccessToken(
       user.id,
       user.username,
-      user.domain,
-      (user as any).tenantId ?? null,
-      this.resolveActorType(user as any),
+      tenantId,
+      actorType,
     );
 
     userAggregate.apply(
       new UserLoggedInEvent(
         user.id,
         user.username,
-        user.domain,
+        tenantId,
         dto.ip,
         dto.address,
         dto.userAgent,
@@ -148,7 +152,6 @@ export class AuthenticationService {
   private async generateAccessToken(
     userId: string,
     username: string,
-    domain: string,
     tenantId: string | null,
     actorType: IAuthentication['actorType'],
   ): Promise<{ token: string; refreshToken: string }> {
@@ -156,7 +159,6 @@ export class AuthenticationService {
       uid: userId,
       userId,
       username,
-      domain,
       tenantId,
       actorType,
     };
@@ -173,10 +175,15 @@ export class AuthenticationService {
     if (user?.actorType) {
       return user.actorType;
     }
-    if (user?.built_in && user?.domain === 'built-in') {
+    return this.resolveActorTypeFromTenantId(user?.tenantId ?? null);
+  }
+
+  private resolveActorTypeFromTenantId(
+    tenantId: string | null,
+  ): IAuthentication['actorType'] {
+    if (tenantId === null) {
       return 'system_admin';
     }
     return 'tenant_user';
   }
 }
-

@@ -4,7 +4,7 @@ export type OperationLogEssentialProperties = Readonly<
   Required<{
     userId: string;
     username: string;
-    domain: string;
+    tenantId: string | null;
     moduleName: string;
     description: string;
     requestId: string;
@@ -33,8 +33,8 @@ export class OperationLogReadModel {
   @ApiProperty({ description: 'Username associated with the operation' })
   username: string;
 
-  @ApiProperty({ description: 'Domain where the operation occurred' })
-  domain: string;
+  @ApiProperty({ description: 'Tenant ID associated with the operation', nullable: true })
+  tenantId: string | null;
 
   @ApiProperty({ description: 'Module where the operation occurred' })
   moduleName: string;

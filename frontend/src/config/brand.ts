@@ -21,16 +21,16 @@ export const brandConfig = {
     showDemoAccounts: showLoginDemoAccounts
   },
   demoAccounts: {
-    super: {
-      identifier: 'JobTap',
+    systemAdmin: {
+      identifier: 'system_admin',
       password: '123456'
     },
-    admin: {
-      identifier: 'Administrator',
+    tenantAdminA: {
+      identifier: 'tenant_admin_a',
       password: '123456'
     },
-    user: {
-      identifier: 'GeneralUser',
+    tenantAdminB: {
+      identifier: 'tenant_admin_b',
       password: '123456'
     }
   },

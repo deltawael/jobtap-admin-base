@@ -18,7 +18,7 @@ export class UserLoggedInHandler implements IEventHandler<UserLoggedInEvent> {
     const loginLog = new LoginLogEntity(
       event.userId,
       event.username,
-      event.domain,
+      event.tenantId,
       event.ip,
       event.address,
       event.userAgent,

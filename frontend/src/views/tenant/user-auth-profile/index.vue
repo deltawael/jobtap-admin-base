@@ -18,6 +18,25 @@ const roleOptions = ref<CommonType.Option<string>[]>([]);
 const capabilityOptions = ref<CommonType.Option<string>[]>([]);
 const userOptions = ref<CommonType.Option<string>[]>([]);
 
+const scopeTypeOptions: CommonType.Option[] = [
+  { label: '全部', value: 'all' },
+  { label: '本人', value: 'self' },
+  { label: '区域', value: 'region' },
+  { label: '部门', value: 'department' },
+  { label: '自定义', value: 'custom' }
+];
+
+const effectOptions: CommonType.Option[] = [
+  { label: '允许', value: 'allow' },
+  { label: '拒绝', value: 'deny' }
+];
+
+const delegationStatusOptions: CommonType.Option[] = [
+  { label: '生效', value: 'active' },
+  { label: '过期', value: 'expired' },
+  { label: '撤销', value: 'revoked' }
+];
+
 const model = reactive({
   tenantId: null as string | null,
   roles: [] as Api.SystemManage.Role[],
@@ -51,9 +70,9 @@ async function loadOptions() {
     fetchGetCapabilities({ module: 'tenant' }),
     fetchGetUserList({ current: 1, size: 200 })
   ]);
-  roleOptions.value = (roles?.records || []).map(item => ({ label: item.name, value: item.id }));
+  roleOptions.value = (roles?.records || []).map(item => ({ label: `${item.name} (${item.code})`, value: item.id }));
   capabilityOptions.value = (capabilities || []).map(item => ({
-    label: `${item.module} / ${item.name}`,
+    label: `${item.name} (${item.code})`,
     value: item.id
   }));
   userOptions.value = (userList?.records || []).map(item => ({
@@ -151,110 +170,144 @@ onMounted(async () => {
   <NCard title="用户授权档案" :bordered="false" size="small" class="card-wrapper">
     <template #header-extra><NButton @click="loadUsers">刷新</NButton></template>
     <NDataTable :columns="userAuthProfileColumns" :data="users" :loading="loading" size="small" />
-    <NDrawer v-model:show="drawerVisible" :width="620">
+    <NDrawer v-model:show="drawerVisible" :width="720">
       <NDrawerContent title="编辑授权档案" closable>
-        <NSpace vertical>
-          <NSelect v-model:value="model.roleIds" multiple filterable :options="roleOptions" placeholder="角色分配" />
-          <NInput v-model:value="model.linkedStaffId" placeholder="关联员工ID" />
-          <div class="border border-[#e5e7eb] rounded-8px p-12px">
-            <NSpace justify="space-between" class="mb-12px">
-              <span>Scope Override</span>
-              <NButton
-                type="primary"
-                text
-                @click="model.scopeOverrides = [...model.scopeOverrides, newScopeOverride()]"
+        <NForm label-placement="left" :label-width="110">
+          <NSpace vertical>
+            <NFormItem label="角色分配">
+              <NSelect
+                v-model:value="model.roleIds"
+                multiple
+                filterable
+                :options="roleOptions"
+                placeholder="请选择角色"
+              />
+            </NFormItem>
+            <NFormItem label="关联员工ID">
+              <NInput v-model:value="model.linkedStaffId" placeholder="请输入关联员工ID" />
+            </NFormItem>
+            <div class="border border-[#e5e7eb] rounded-8px p-12px">
+              <NSpace justify="space-between" class="mb-12px">
+                <span>Scope 覆盖</span>
+                <NButton
+                  type="primary"
+                  text
+                  @click="model.scopeOverrides = [...model.scopeOverrides, newScopeOverride()]"
+                >
+                  新增
+                </NButton>
+              </NSpace>
+              <div
+                v-for="(item, index) in model.scopeOverrides"
+                :key="index"
+                class="mb-12px rounded-8px bg-[#f8fafc] p-12px"
               >
-                新增
-              </NButton>
-            </NSpace>
-            <div
-              v-for="(item, index) in model.scopeOverrides"
-              :key="index"
-              class="mb-12px rounded-8px bg-[#f8fafc] p-12px"
-            >
-              <NSpace vertical>
-                <NSelect v-model:value="item.capabilityId" filterable :options="capabilityOptions" placeholder="能力" />
-                <NSelect
-                  v-model:value="item.scopeType"
-                  :options="[
-                    { label: '全部', value: 'all' },
-                    { label: '本人', value: 'self' },
-                    { label: '区域', value: 'region' },
-                    { label: '部门', value: 'department' },
-                    { label: '自定义', value: 'custom' }
-                  ]"
-                  placeholder="Scope类型"
-                />
-                <NInput v-model:value="item.scopeValue" placeholder="Scope值" />
-                <NSelect
-                  v-model:value="item.effect"
-                  :options="[
-                    { label: '允许', value: 'allow' },
-                    { label: '拒绝', value: 'deny' }
-                  ]"
-                  placeholder="效果"
-                />
-                <NInput v-model:value="item.startAt" placeholder="开始时间，例如 2026-06-23T00:00:00.000Z" />
-                <NInput v-model:value="item.endAt" placeholder="结束时间，例如 2026-06-30T23:59:59.000Z" />
-                <NButton
-                  type="error"
-                  text
-                  @click="model.scopeOverrides = model.scopeOverrides.filter((_, idx) => idx !== index)"
-                >
-                  删除
+                <NForm label-placement="left" :label-width="110">
+                  <NSpace vertical>
+                    <NFormItem label="能力">
+                      <NSelect
+                        v-model:value="item.capabilityId"
+                        filterable
+                        :options="capabilityOptions"
+                        placeholder="请选择能力"
+                      />
+                    </NFormItem>
+                    <NFormItem label="Scope类型">
+                      <NSelect
+                        v-model:value="item.scopeType"
+                        :options="scopeTypeOptions"
+                        placeholder="请选择Scope类型"
+                      />
+                    </NFormItem>
+                    <NFormItem label="Scope值">
+                      <NInput v-model:value="item.scopeValue" placeholder="请输入Scope值" />
+                    </NFormItem>
+                    <NFormItem label="效果">
+                      <NSelect v-model:value="item.effect" :options="effectOptions" placeholder="请选择效果" />
+                    </NFormItem>
+                    <NFormItem label="开始时间">
+                      <NInput v-model:value="item.startAt" placeholder="例如 2026-06-23T00:00:00.000Z" />
+                    </NFormItem>
+                    <NFormItem label="结束时间">
+                      <NInput v-model:value="item.endAt" placeholder="例如 2026-06-30T23:59:59.000Z" />
+                    </NFormItem>
+                    <NButton
+                      type="error"
+                      text
+                      @click="model.scopeOverrides = model.scopeOverrides.filter((_, idx) => idx !== index)"
+                    >
+                      删除
+                    </NButton>
+                  </NSpace>
+                </NForm>
+              </div>
+            </div>
+            <div class="border border-[#e5e7eb] rounded-8px p-12px">
+              <NSpace justify="space-between" class="mb-12px">
+                <span>委派授权</span>
+                <NButton type="primary" text @click="model.delegations = [...model.delegations, newDelegation()]">
+                  新增
                 </NButton>
               </NSpace>
+              <div
+                v-for="(item, index) in model.delegations"
+                :key="index"
+                class="mb-12px rounded-8px bg-[#f8fafc] p-12px"
+              >
+                <NForm label-placement="left" :label-width="110">
+                  <NSpace vertical>
+                    <NFormItem label="委派来源用户">
+                      <NSelect
+                        v-model:value="item.fromUserId"
+                        filterable
+                        :options="userOptions"
+                        placeholder="请选择来源用户"
+                      />
+                    </NFormItem>
+                    <NFormItem label="能力">
+                      <NSelect
+                        v-model:value="item.capabilityId"
+                        filterable
+                        :options="capabilityOptions"
+                        placeholder="请选择能力"
+                      />
+                    </NFormItem>
+                    <NFormItem label="Scope类型">
+                      <NSelect
+                        v-model:value="item.scopeType"
+                        :options="scopeTypeOptions"
+                        placeholder="请选择Scope类型"
+                      />
+                    </NFormItem>
+                    <NFormItem label="Scope值">
+                      <NInput v-model:value="item.scopeValue" placeholder="请输入Scope值" />
+                    </NFormItem>
+                    <NFormItem label="状态">
+                      <NSelect
+                        v-model:value="item.status"
+                        :options="delegationStatusOptions"
+                        placeholder="请选择状态"
+                      />
+                    </NFormItem>
+                    <NFormItem label="开始时间">
+                      <NInput v-model:value="item.startAt" placeholder="例如 2026-06-23T00:00:00.000Z" />
+                    </NFormItem>
+                    <NFormItem label="结束时间">
+                      <NInput v-model:value="item.endAt" placeholder="例如 2026-06-30T23:59:59.000Z" />
+                    </NFormItem>
+                    <NButton
+                      type="error"
+                      text
+                      @click="model.delegations = model.delegations.filter((_, idx) => idx !== index)"
+                    >
+                      删除
+                    </NButton>
+                  </NSpace>
+                </NForm>
+              </div>
             </div>
-          </div>
-          <div class="border border-[#e5e7eb] rounded-8px p-12px">
-            <NSpace justify="space-between" class="mb-12px">
-              <span>Delegation</span>
-              <NButton type="primary" text @click="model.delegations = [...model.delegations, newDelegation()]">
-                新增
-              </NButton>
-            </NSpace>
-            <div
-              v-for="(item, index) in model.delegations"
-              :key="index"
-              class="mb-12px rounded-8px bg-[#f8fafc] p-12px"
-            >
-              <NSpace vertical>
-                <NSelect v-model:value="item.fromUserId" filterable :options="userOptions" placeholder="委派来源用户" />
-                <NSelect v-model:value="item.capabilityId" filterable :options="capabilityOptions" placeholder="能力" />
-                <NSelect
-                  v-model:value="item.scopeType"
-                  :options="[
-                    { label: '全部', value: 'all' },
-                    { label: '本人', value: 'self' },
-                    { label: '区域', value: 'region' },
-                    { label: '部门', value: 'department' },
-                    { label: '自定义', value: 'custom' }
-                  ]"
-                  placeholder="Scope类型"
-                />
-                <NInput v-model:value="item.scopeValue" placeholder="Scope值" />
-                <NSelect
-                  v-model:value="item.status"
-                  :options="[
-                    { label: '生效', value: 'active' },
-                    { label: '过期', value: 'expired' },
-                    { label: '撤销', value: 'revoked' }
-                  ]"
-                  placeholder="状态"
-                />
-                <NInput v-model:value="item.startAt" placeholder="开始时间，例如 2026-06-23T00:00:00.000Z" />
-                <NInput v-model:value="item.endAt" placeholder="结束时间，例如 2026-06-30T23:59:59.000Z" />
-                <NButton
-                  type="error"
-                  text
-                  @click="model.delegations = model.delegations.filter((_, idx) => idx !== index)"
-                >
-                  删除
-                </NButton>
-              </NSpace>
-            </div>
-          </div>
-        </NSpace>
+          </NSpace>
+        </NForm>
         <template #footer>
           <NSpace justify="end">
             <NButton @click="drawerVisible = false">取消</NButton>

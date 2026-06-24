@@ -35,8 +35,8 @@ async function search() {
         <NFormItemGi span="24 s:12 m:6" label="username" path="username" class="pr-24px">
           <NInput v-model:value="model.username" />
         </NFormItemGi>
-        <NFormItemGi span="24 s:12 m:6" label="domain" path="domain" class="pr-24px">
-          <NInput v-model:value="model.domain" />
+        <NFormItemGi span="24 s:12 m:6" label="租户ID" path="tenantId" class="pr-24px">
+          <NInput v-model:value="model.tenantId" />
         </NFormItemGi>
         <NFormItemGi span="24 s:12 m:6" label="moduleName" path="moduleName" class="pr-24px">
           <NInput v-model:value="model.moduleName" />

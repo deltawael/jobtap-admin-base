@@ -9,6 +9,7 @@ import { Reflector } from '@nestjs/core';
 import * as casbin from 'casbin';
 
 import { CacheConstant } from '@lib/constants/cache.constant';
+import { BUILT_IN } from '@lib/shared/prisma/db.constant';
 import { RedisUtility } from '@lib/shared/redis/redis.util';
 
 import {
@@ -53,10 +54,10 @@ export class AuthZGuard implements CanActivate {
 
       return await AuthZGuard.asyncEvery<Permission>(
         permissions,
-        async (permission) =>
+        async permission =>
           this.hasPermission(
             new Set(userRoles),
-            user.domain,
+            this.resolveTenantScope(user.tenantId ?? null),
             permission,
             context,
             this.enforcer,
@@ -70,16 +71,20 @@ export class AuthZGuard implements CanActivate {
 
   async hasPermission(
     roles: Set<string>,
-    domain: string,
+    tenantScope: string,
     permission: Permission,
     context: ExecutionContext,
     enforcer: casbin.Enforcer,
   ): Promise<boolean> {
     const { resource, action } = permission;
 
-    return AuthZGuard.asyncSome<string>(Array.from(roles), async (role) => {
-      return enforcer.enforce(role, resource, action, domain);
+    return AuthZGuard.asyncSome<string>(Array.from(roles), async role => {
+      return enforcer.enforce(role, resource, action, tenantScope);
     });
+  }
+
+  private resolveTenantScope(tenantId: string | null): string {
+    return tenantId ?? BUILT_IN;
   }
 
   static async asyncSome<T>(

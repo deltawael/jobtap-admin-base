@@ -425,9 +425,9 @@ declare namespace App {
             title: string;
             rememberMe: string;
             otherAccountLogin: string;
-            superAdmin: string;
-            admin: string;
-            user: string;
+            systemAdmin: string;
+            tenantAdminA: string;
+            tenantAdminB: string;
           };
         };
         home: {
@@ -479,9 +479,6 @@ declare namespace App {
             };
             addRole: string;
             editRole: string;
-            menuAuth: string;
-            buttonAuth: string;
-            permissionAuth: string;
           };
           user: {
             title: string;

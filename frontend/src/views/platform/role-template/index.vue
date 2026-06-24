@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { h, onMounted, reactive, ref } from 'vue';
-import { NButton } from 'naive-ui';
+import { NButton, NTag } from 'naive-ui';
 import type { DataTableColumns } from 'naive-ui';
 import {
   type RoleTemplateModel,
@@ -9,12 +9,19 @@ import {
   fetchGetRoleTemplates,
   updateRoleTemplate
 } from '@/service/api';
+import {
+  type CapabilityTreeNode,
+  buildCapabilityTree,
+  getActorTypeLabel,
+  normalizeCapabilityIds
+} from '@/utils/capability';
 
 const loading = ref(false);
 const visible = ref(false);
 const editingId = ref<string | null>(null);
 const data = ref<Api.SystemManage.RoleTemplate[]>([]);
-const capabilityOptions = ref<CommonType.Option<string>[]>([]);
+const capabilityTree = ref<CapabilityTreeNode[]>([]);
+const selectedCapabilityKeys = ref<string[]>([]);
 const model = reactive<RoleTemplateModel>({
   code: '',
   name: '',
@@ -24,11 +31,48 @@ const model = reactive<RoleTemplateModel>({
   capabilityIds: []
 });
 
+const actorTypeOptions: CommonType.Option[] = [
+  { label: '系统管理员', value: 'system_admin' },
+  { label: '租户管理员', value: 'tenant_admin' },
+  { label: '租户业务用户', value: 'tenant_user' }
+];
+
+const statusOptions: CommonType.Option[] = [
+  { label: '启用', value: 'ENABLED' },
+  { label: '停用', value: 'DISABLED' }
+];
+
 const roleTemplateColumns: DataTableColumns<Api.SystemManage.RoleTemplate> = [
   { key: 'code', title: '编码' },
   { key: 'name', title: '名称' },
-  { key: 'actorType', title: '主体类型' },
-  { key: 'capabilityCount', title: '能力数' },
+  {
+    key: 'actorType',
+    title: '主体类型',
+    render: row => getActorTypeLabel(row.actorType)
+  },
+  {
+    key: 'capabilityCount',
+    title: '能力数',
+    width: 100,
+    render: row => h(NTag, { type: 'info' }, { default: () => row.capabilityCount || 0 })
+  },
+  {
+    key: 'status',
+    title: '状态',
+    width: 100,
+    render: row =>
+      h(
+        NTag,
+        { type: row.status === 'ENABLED' ? 'success' : 'warning' },
+        { default: () => (row.status === 'ENABLED' ? '启用' : '停用') }
+      )
+  },
+  {
+    key: 'builtIn',
+    title: '内置',
+    width: 80,
+    render: row => (row.builtIn ? '是' : '否')
+  },
   {
     key: 'operate',
     title: '操作',
@@ -48,15 +92,18 @@ async function loadData() {
     fetchGetCapabilities()
   ]);
   data.value = templates || [];
-  capabilityOptions.value = (capabilities || []).map(item => ({
-    label: `${item.module} / ${item.name}`,
-    value: item.id
-  }));
+  capabilityTree.value = buildCapabilityTree(capabilities || []);
   loading.value = false;
+}
+
+function syncCapabilitySelection(value: string[]) {
+  selectedCapabilityKeys.value = value;
+  model.capabilityIds = normalizeCapabilityIds(value, capabilityTree.value);
 }
 
 function openAdd() {
   editingId.value = null;
+  selectedCapabilityKeys.value = [];
   Object.assign(model, {
     code: '',
     name: '',
@@ -70,6 +117,8 @@ function openAdd() {
 
 function openEdit(row: Api.SystemManage.RoleTemplate) {
   editingId.value = row.id;
+  const capabilityIds = row.capabilityIds || [];
+  selectedCapabilityKeys.value = [...capabilityIds];
   Object.assign(model, {
     id: row.id,
     code: row.code,
@@ -77,14 +126,18 @@ function openEdit(row: Api.SystemManage.RoleTemplate) {
     actorType: row.actorType,
     description: row.description || '',
     status: row.status,
-    capabilityIds: row.capabilityIds || []
+    capabilityIds
   });
   visible.value = true;
 }
 
 async function handleSubmit() {
+  const payload: RoleTemplateModel = {
+    ...model,
+    capabilityIds: normalizeCapabilityIds(selectedCapabilityKeys.value, capabilityTree.value)
+  };
   const fn = editingId.value ? updateRoleTemplate : createRoleTemplate;
-  const { error } = await fn(model);
+  const { error } = await fn(payload);
   if (error) return;
   visible.value = false;
   await loadData();
@@ -102,28 +155,39 @@ onMounted(loadData);
       </NSpace>
     </template>
     <NDataTable :columns="roleTemplateColumns" :data="data" :loading="loading" size="small" />
-    <NModal v-model:show="visible" preset="card" :title="editingId ? '编辑模板' : '新增模板'" class="w-560px">
-      <NSpace vertical>
-        <NInput v-model:value="model.code" placeholder="模板编码" :disabled="!!editingId" />
-        <NInput v-model:value="model.name" placeholder="模板名称" />
-        <NSelect
-          v-model:value="model.actorType"
-          :options="[
-            { label: '系统管理员', value: 'system_admin' },
-            { label: '租户管理员', value: 'tenant_admin' },
-            { label: '租户业务用户', value: 'tenant_user' }
-          ]"
-          placeholder="主体类型"
-        />
-        <NInput v-model:value="model.description" placeholder="描述" />
-        <NSelect
-          v-model:value="model.capabilityIds"
-          multiple
-          filterable
-          :options="capabilityOptions"
-          placeholder="能力集合"
-        />
-      </NSpace>
+    <NModal v-model:show="visible" preset="card" :title="editingId ? '编辑模板' : '新增模板'" class="w-620px">
+      <NForm :model="model" label-placement="left" :label-width="100">
+        <NSpace vertical>
+          <NFormItem label="模板编码" path="code">
+            <NInput v-model:value="model.code" placeholder="请输入模板编码" :disabled="!!editingId" />
+          </NFormItem>
+          <NFormItem label="模板名称" path="name">
+            <NInput v-model:value="model.name" placeholder="请输入模板名称" />
+          </NFormItem>
+          <NFormItem label="主体类型" path="actorType">
+            <NSelect v-model:value="model.actorType" :options="actorTypeOptions" placeholder="请选择主体类型" />
+          </NFormItem>
+          <NFormItem label="状态" path="status">
+            <NSelect v-model:value="model.status" :options="statusOptions" placeholder="请选择状态" />
+          </NFormItem>
+          <NFormItem label="能力集合" path="capabilityIds">
+            <NTreeSelect
+              v-model:value="selectedCapabilityKeys"
+              multiple
+              cascade
+              checkable
+              clearable
+              check-strategy="child"
+              :options="capabilityTree"
+              placeholder="请选择能力集合"
+              @update:value="value => syncCapabilitySelection((value || []) as string[])"
+            />
+          </NFormItem>
+          <NFormItem label="描述" path="description">
+            <NInput v-model:value="model.description" type="textarea" placeholder="请输入描述" />
+          </NFormItem>
+        </NSpace>
+      </NForm>
       <template #footer>
         <NSpace justify="end">
           <NButton @click="visible = false">取消</NButton>

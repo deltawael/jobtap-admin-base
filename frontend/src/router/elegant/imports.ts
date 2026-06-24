@@ -24,14 +24,15 @@ export const views: Record<LastLevelRouteKey, RouteComponent | (() => Promise<Ro
   home: () => import("@/views/home/index.vue"),
   log_login: () => import("@/views/log/login/index.vue"),
   log_operation: () => import("@/views/log/operation/index.vue"),
-  manage_menu: () => import("@/views/manage/menu/index.vue"),
-  manage_role: () => import("@/views/manage/role/index.vue"),
-  "manage_user-detail": () => import("@/views/manage/user-detail/[id].vue"),
-  manage_user: () => import("@/views/manage/user/index.vue"),
   platform_audit: () => import("@/views/platform/audit/index.vue"),
   platform_capability: () => import("@/views/platform/capability/index.vue"),
+  "platform_resource-catalog": () => import("@/views/platform/resource-catalog/index.vue"),
   "platform_role-template": () => import("@/views/platform/role-template/index.vue"),
   platform_tenant: () => import("@/views/platform/tenant/index.vue"),
   tenant_audit: () => import("@/views/tenant/audit/index.vue"),
+  tenant_role: () => import("@/views/tenant/role/index.vue"),
+  tenant_user: () => import("@/views/tenant/user/index.vue"),
   "tenant_user-auth-profile": () => import("@/views/tenant/user-auth-profile/index.vue"),
 };
+
+
