@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { AccessKey } from '@app/base-system/lib/bounded-contexts/access-key/domain/access_key.model';
 import { AccessKeyWriteRepoPort } from '@app/base-system/lib/bounded-contexts/access-key/ports/access_key.write.repo-port';
 
-import { BUILT_IN } from '@lib/shared/prisma/db.constant';
 import { PrismaService } from '@lib/shared/prisma/prisma.service';
 
 @Injectable()
@@ -22,7 +21,7 @@ export class AccessKeyWritePostgresRepository
     await this.prisma.sysAccessKey.create({
       data: {
         id: accessKey.id,
-        domain: accessKey.tenantId ?? BUILT_IN,
+        tenantId: accessKey.tenantId,
         AccessKeyID: accessKey.AccessKeyID,
         AccessKeySecret: accessKey.AccessKeySecret,
         status: accessKey.status,

@@ -77,7 +77,6 @@ declare module "@elegant-router/types" {
     | "iframe-page"
     | "log"
     | "login"
-    | "manage"
     | "platform"
     | "tenant"
   >;
@@ -112,8 +111,8 @@ declare module "@elegant-router/types" {
     | "platform_tenant"
     | "tenant_audit"
     | "tenant_role"
-    | "tenant_user"
     | "tenant_user-auth-profile"
+    | "tenant_user"
   >;
 
   /**
@@ -270,5 +269,3 @@ declare module "@elegant-router/types" {
    */
   type ElegantRoute = GeneratedRoute | CustomRoute;
 }
-
-

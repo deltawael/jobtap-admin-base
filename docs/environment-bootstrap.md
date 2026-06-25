@@ -53,7 +53,7 @@ pnpm exec prisma db seed
 
 新环境初始化后至少会生成：
 
-- 平台上下文：`built-in`
+- 平台主体上下文：`tenantId = null`（仅在 Casbin 执行层映射为 `BUILT_IN`）
 - 租户：`tenant_a`、`tenant_b`
 - 平台预置角色模板：`system_admin`、`tenant_admin`、`boss`、`manager`、`staff`、`readonly`
 - 能力目录
@@ -66,9 +66,9 @@ pnpm exec prisma db seed
 
 ### 3.1 初始化账号
 
-| username | actorType | tenantId | tenant code | status | 用途 |
+| username | actorType | tenantId | Tenant.code（租户主数据编码） | status | 用途 |
 | --- | --- | --- | --- | --- | --- |
-| `system_admin` | `system_admin` | `null` | `built-in` | `ENABLED` | 平台管理员 |
+| `system_admin` | `system_admin` | `null` | `-` | `ENABLED` | 平台管理员 |
 | `tenant_admin_a` | `tenant_admin` | `tenant-a` | `tenant_a` | `ENABLED` | 租户 A 管理员 |
 | `tenant_admin_b` | `tenant_admin` | `tenant-b` | `tenant_b` | `ENABLED` | 租户 B 管理员 |
 
@@ -76,7 +76,7 @@ pnpm exec prisma db seed
 
 - 不再初始化业务演示账号。
 - `boss / manager / staff / readonly` 只作为模板存在，供租户后续复制创建角色。
-- `system_admin` 不绑定租户；两个租户管理员必须绑定各自租户。
+- `system_admin` 不绑定租户；两个租户管理员必须绑定各自租户。`Tenant.code` 只属于租户主数据，不进入 JWT 或 `IAuthentication`。
 
 ### 3.2 初始化密码策略
 

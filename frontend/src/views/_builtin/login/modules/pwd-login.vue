@@ -3,7 +3,7 @@ import { computed, reactive } from 'vue';
 import { brandConfig } from '@/config/brand';
 import { useAuthStore } from '@/store/modules/auth';
 import { useFormRules, useNaiveForm } from '@/hooks/common/form';
-import {} from '@/locales';
+import { $t } from '@/locales';
 
 defineOptions({
   name: 'PwdLogin'
@@ -76,28 +76,28 @@ async function handleAccountLogin(account: Account) {
 <template>
   <NForm ref="formRef" :model="model" :rules="rules" size="large" :show-label="false" @keyup.enter="handleSubmit">
     <NFormItem path="identifier">
-      <NInput v-model:value="model.identifier" placeholder="page.login.common.userNamePlaceholder" />
+      <NInput v-model:value="model.identifier" :placeholder="$t('page.login.common.userNamePlaceholder')" />
     </NFormItem>
     <NFormItem path="password">
       <NInput
         v-model:value="model.password"
         type="password"
         show-password-on="click"
-        placeholder="page.login.common.passwordPlaceholder"
+        :placeholder="$t('page.login.common.passwordPlaceholder')"
       />
     </NFormItem>
     <NSpace vertical :size="24">
       <div class="flex-y-center">
-        <NCheckbox>page.login.pwdLogin.rememberMe</NCheckbox>
+        <NCheckbox>{{ $t('page.login.pwdLogin.rememberMe') }}</NCheckbox>
       </div>
       <NButton type="primary" size="large" round block :loading="authStore.loginLoading" @click="handleSubmit">
-        common.confirm
+        {{ $t('common.confirm') }}
       </NButton>
       <template v-if="showDemoAccounts">
-        <NDivider class="text-14px text-#666 !m-0">page.login.pwdLogin.otherAccountLogin</NDivider>
+        <NDivider class="text-14px text-#666 !m-0">{{ $t('page.login.pwdLogin.otherAccountLogin') }}</NDivider>
         <div class="flex-center gap-12px">
           <NButton v-for="item in accounts" :key="item.key" type="primary" @click="handleAccountLogin(item)">
-            {{ item.label }}
+            {{ $t(item.label) }}
           </NButton>
         </div>
       </template>

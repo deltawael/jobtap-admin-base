@@ -5,16 +5,6 @@ export interface MenuReadRepoPort {
 
   getMenuById(id: number): Promise<MenuProperties | null>;
 
-  findMenusByRoleCode(
-    roleCode: string[],
-    domain: string,
-  ): Promise<Readonly<MenuProperties[]> | []>;
-
-  findMenusByRoleId(
-    roleId: string,
-    domain: string,
-  ): Promise<Readonly<MenuProperties[]> | []>;
-
   getConstantRoutes(): Promise<Readonly<MenuProperties[]> | []>;
 
   findAll(): Promise<MenuTreeProperties[] | []>;
@@ -22,6 +12,4 @@ export interface MenuReadRepoPort {
   findAllConstantMenu(constant: boolean): Promise<MenuTreeProperties[] | []>;
 
   findMenusByIds(ids: number[]): Promise<MenuProperties[]>;
-
-  findMenuIdsByUserId(userId: string, domain: string): Promise<number[]>;
 }

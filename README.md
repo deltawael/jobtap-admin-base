@@ -4,7 +4,7 @@
 
 当前仓库的核心约束：
 
-- 统一术语：`domain -> tenant`
+- 统一术语：`domain -> tenant`，运行时与存储层都不再保留 `domain` 作为租户语义
 - 多租户模型：`单库共享表 + tenant_id 强隔离`
 - 授权主模型：`capability + scope + delegation`
 - 菜单、按钮、接口、视图块都只是 capability 的投影

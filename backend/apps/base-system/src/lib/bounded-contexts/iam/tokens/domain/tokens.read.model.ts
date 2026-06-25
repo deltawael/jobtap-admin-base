@@ -7,7 +7,7 @@ export type TokensEssentialProperties = Readonly<
     status: string;
     userId: string;
     username: string;
-    domain: string;
+    tenantId: string | null;
     ip: string;
     address: string;
     userAgent: string;
@@ -35,11 +35,14 @@ export class TokensReadModel {
 
   userId: string;
 
-  @ApiProperty({ description: 'Username associated with the login event' })
+  @ApiProperty({ description: 'Username associated with the token session' })
   username: string;
 
-  @ApiProperty({ description: 'Domain where the login occurred' })
-  domain: string;
+  @ApiProperty({
+    description: 'Tenant identifier associated with the token session',
+    nullable: true,
+  })
+  tenantId: string | null;
 
   @ApiProperty({
     description: 'Time when the login occurred',

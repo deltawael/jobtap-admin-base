@@ -8,7 +8,6 @@ import {
 import { AccessKeyReadRepoPort } from '@app/base-system/lib/bounded-contexts/access-key/ports/access_key.read.repo-port';
 import { PageAccessKeysQuery } from '@app/base-system/lib/bounded-contexts/access-key/queries/page-access_key.query';
 
-import { BUILT_IN } from '@lib/shared/prisma/db.constant';
 import { PaginationResult } from '@lib/shared/prisma/pagination';
 import { PrismaService } from '@lib/shared/prisma/prisma.service';
 
@@ -21,10 +20,8 @@ export class AccessKeyReadPostgresRepository implements AccessKeyReadRepoPort {
   ): Promise<PaginationResult<AccessKeyReadModel>> {
     const where: Prisma.SysAccessKeyWhereInput = {};
 
-    if (query.tenantId) {
-      where.domain = {
-        contains: query.tenantId,
-      };
+    if (query.tenantId !== undefined) {
+      where.tenantId = query.tenantId;
     }
 
     if (query.status) {
@@ -37,7 +34,7 @@ export class AccessKeyReadPostgresRepository implements AccessKeyReadRepoPort {
       take: query.size,
       select: {
         id: true,
-        domain: true,
+        tenantId: true,
         AccessKeyID: true,
         status: true,
         description: true,
@@ -48,42 +45,23 @@ export class AccessKeyReadPostgresRepository implements AccessKeyReadRepoPort {
 
     const total = await this.prisma.sysAccessKey.count({ where });
 
-    const rows = accessKeys.map(({ domain, ...accessKey }) => ({
-      ...accessKey,
-      tenantId: domain === BUILT_IN ? null : domain,
-    }));
-
     return new PaginationResult<AccessKeyReadModel>(
       query.current,
       query.size,
       total,
-      rows,
+      accessKeys,
     );
   }
 
   async getAccessKeyById(
     id: string,
   ): Promise<Readonly<AccessKeyProperties> | null> {
-    const accessKey = await this.prisma.sysAccessKey.findUnique({
+    return this.prisma.sysAccessKey.findUnique({
       where: { id },
     });
-
-    if (!accessKey) {
-      return null;
-    }
-
-    const { domain, ...rest } = accessKey;
-    return {
-      ...rest,
-      tenantId: domain === BUILT_IN ? null : domain,
-    };
   }
 
   async findAll(): Promise<AccessKeyProperties[]> {
-    const accessKeys = await this.prisma.sysAccessKey.findMany();
-    return accessKeys.map(({ domain, ...accessKey }) => ({
-      ...accessKey,
-      tenantId: domain === BUILT_IN ? null : domain,
-    }));
+    return this.prisma.sysAccessKey.findMany();
   }
 }

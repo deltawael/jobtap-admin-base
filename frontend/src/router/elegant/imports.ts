@@ -31,8 +31,6 @@ export const views: Record<LastLevelRouteKey, RouteComponent | (() => Promise<Ro
   platform_tenant: () => import("@/views/platform/tenant/index.vue"),
   tenant_audit: () => import("@/views/tenant/audit/index.vue"),
   tenant_role: () => import("@/views/tenant/role/index.vue"),
-  tenant_user: () => import("@/views/tenant/user/index.vue"),
   "tenant_user-auth-profile": () => import("@/views/tenant/user-auth-profile/index.vue"),
+  tenant_user: () => import("@/views/tenant/user/index.vue"),
 };
-
-

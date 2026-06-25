@@ -18,7 +18,7 @@ model SysTokens {
   status       String
   userId       String   @map("user_id")
   username     String
-  domain       String
+  tenantId     String?  @map("tenant_id")
   loginTime    DateTime @default(now()) @map("login_time")
   ip           String
   port         Int?
@@ -29,6 +29,7 @@ model SysTokens {
   createdAt    DateTime @default(now()) @map("created_at")
   createdBy    String   @map("created_by")
 
+  @@index([tenantId])
   @@map("sys_tokens")
 }
 
@@ -36,7 +37,6 @@ model SysUser {
   id          String    @id
   username    String    @unique
   password    String
-  domain      String
   tenantId    String?   @map("tenant_id")
   actorType   ActorType @default(tenant_user) @map("actor_type")
   built_in    Boolean   @default(false)
@@ -79,19 +79,6 @@ model CasbinRule {
   @@map("casbin_rule")
 }
 
-model SysDomain {
-  id          String    @id
-  code        String    @unique
-  name        String
-  description String?
-  status      Status
-  createdAt   DateTime  @default(now()) @map("created_at")
-  createdBy   String    @map("created_by")
-  updatedAt   DateTime? @updatedAt @map("updated_at")
-  updatedBy   String?   @map("updated_by")
-
-  @@map("sys_domain")
-}
 
 model Tenant {
   id          String    @id @default(cuid())
@@ -365,7 +352,7 @@ model SysLoginLog {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
   username  String
-  domain    String
+  tenantId  String?  @map("tenant_id")
   loginTime DateTime @default(now()) @map("login_time")
   ip        String
   port      Int?
@@ -376,6 +363,7 @@ model SysLoginLog {
   createdAt DateTime @default(now()) @map("created_at")
   createdBy String   @map("created_by")
 
+  @@index([tenantId])
   @@map("sys_login_log")
 }
 
@@ -383,7 +371,7 @@ model SysOperationLog {
   id          String   @id @default(cuid())
   userId      String   @map("user_id")
   username    String
-  domain      String
+  tenantId    String?  @map("tenant_id")
   moduleName  String   @map("module_name")
   description String
   requestId   String   @map("request_id")
@@ -399,6 +387,7 @@ model SysOperationLog {
   duration    Int
   createdAt   DateTime @default(now()) @map("created_at")
 
+  @@index([tenantId])
   @@map("sys_operation_log")
 }
 
@@ -438,14 +427,6 @@ model SysMenu {
   @@map("sys_menu")
 }
 
-model SysRoleMenu {
-  roleId String @map("role_id")
-  menuId Int    @map("menu_id")
-  domain String
-
-  @@id([roleId, menuId, domain])
-  @@map("sys_role_menu")
-}
 
 model AuditLog {
   id            String    @id @default(cuid())
@@ -465,7 +446,7 @@ model AuditLog {
 
 model SysAccessKey {
   id              String   @id @default(cuid())
-  domain          String
+  tenantId        String?  @map("tenant_id")
   AccessKeyID     String   @unique @map("access_key_id")
   AccessKeySecret String   @unique @map("access_key_secret")
   status          Status
@@ -473,5 +454,6 @@ model SysAccessKey {
   createdAt       DateTime @default(now()) @map("created_at")
   createdBy       String   @map("created_by")
 
+  @@index([tenantId])
   @@map("sys_access_key")
 }

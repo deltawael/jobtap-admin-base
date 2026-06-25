@@ -75,7 +75,6 @@ export class UserController {
   async createUser(@Body() dto: UserCreateDto, @Request() req: any): Promise<ApiRes<null>> {
     const actor = req.user as IAuthentication;
     const tenantId = this.requireTenantScope(actor);
-    const tenantCode = await this.resolveTenantCode(tenantId);
     await this.ensureRolesScoped(tenantId, dto.roleIds);
 
     const created = await this.prisma.sysUser.create({
@@ -83,7 +82,6 @@ export class UserController {
         id: randomUUID(),
         username: dto.username,
         password: dto.password,
-        domain: tenantCode,
         tenantId,
         actorType: 'tenant_user',
         built_in: false,
@@ -188,14 +186,6 @@ export class UserController {
     if (roles.some(item => item.tenantId !== tenantId)) {
       throw new ForbiddenException('Role does not belong to the current tenant');
     }
-  }
-
-  private async resolveTenantCode(tenantId: string) {
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
-    if (!tenant) {
-      throw new NotFoundException('Tenant not found');
-    }
-    return tenant.code;
   }
 
   private async syncUserRoles(userId: string, roleIds: string[]) {

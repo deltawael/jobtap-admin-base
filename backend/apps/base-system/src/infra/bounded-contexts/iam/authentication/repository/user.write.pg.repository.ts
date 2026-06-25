@@ -17,16 +17,6 @@ export class UserWriteRepository implements UserWriteRepoPort {
     await this.prisma.sysUserRole.deleteMany({ where: { roleId } });
   }
 
-  async deleteUserRoleByDomain(domain: string): Promise<void> {
-    await this.prisma.$transaction(async prisma => {
-      const users = await prisma.sysUser.findMany({ where: { domain }, select: { id: true } });
-      const userIds = users.map(user => user.id);
-      if (userIds.length === 0) return;
-      await prisma.sysUser.deleteMany({ where: { id: { in: userIds } } });
-      await prisma.sysUserRole.deleteMany({ where: { userId: { in: userIds } } });
-    });
-  }
-
   async deleteUserRoleByUserId(userId: string): Promise<void> {
     await this.prisma.sysUserRole.deleteMany({ where: { userId } });
   }
@@ -43,7 +33,8 @@ export class UserWriteRepository implements UserWriteRepoPort {
           id: user.id,
           username: user.username,
           password: user.password.getValue(),
-          domain: user.domain,
+          tenantId: user.tenantId,
+          actorType: user.actorType,
           nickName: user.nickName,
           status: user.status,
           avatar: user.avatar,

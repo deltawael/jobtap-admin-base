@@ -5,7 +5,6 @@ import { LoginLogProperties } from '@app/base-system/lib/bounded-contexts/log-au
 import { LoginLogReadRepoPort } from '@app/base-system/lib/bounded-contexts/log-audit/login-log/ports/login-log.read.repo-port';
 import { PageLoginLogsQuery } from '@app/base-system/lib/bounded-contexts/log-audit/login-log/queries/page-login-logs.query';
 
-import { BUILT_IN } from '@lib/shared/prisma/db.constant';
 import { PaginationResult } from '@lib/shared/prisma/pagination';
 import { PrismaService } from '@lib/shared/prisma/prisma.service';
 
@@ -24,8 +23,8 @@ export class LoginLogReadRepository implements LoginLogReadRepoPort {
       };
     }
 
-    if (query.tenantId) {
-      where.domain = query.tenantId;
+    if (query.tenantId !== undefined) {
+      where.tenantId = query.tenantId;
     }
 
     if (query.address) {
@@ -51,16 +50,11 @@ export class LoginLogReadRepository implements LoginLogReadRepoPort {
 
     const total = await this.prisma.sysLoginLog.count({ where });
 
-    const rows = loginLogs.map(({ domain, ...log }) => ({
-      ...log,
-      tenantId: domain === BUILT_IN ? null : domain,
-    }));
-
     return new PaginationResult<LoginLogProperties>(
       query.current,
       query.size,
       total,
-      rows,
+      loginLogs,
     );
   }
 }

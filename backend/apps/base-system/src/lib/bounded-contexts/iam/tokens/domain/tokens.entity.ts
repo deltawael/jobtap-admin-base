@@ -15,7 +15,7 @@ export class TokensEntity extends AggregateRoot implements ITokens {
   status: string;
   readonly userId: string;
   readonly username: string;
-  readonly domain: string;
+  readonly tenantId: string | null;
   readonly ip: string;
   readonly address: string;
   readonly userAgent: string;

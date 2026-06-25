@@ -1,5 +1,5 @@
 import { AggregateRoot } from '@nestjs/cqrs';
-import { Status } from '@prisma/client';
+import { ActorType, Status } from '@prisma/client';
 
 import { UserCreatedEvent } from './events/user-created.event';
 import { UserDeletedEvent } from './events/user-deleted.event';
@@ -23,7 +23,8 @@ export class User extends AggregateRoot implements IUser {
   readonly nickName: string;
   readonly password: Password;
   readonly status: Status;
-  readonly domain: string;
+  readonly tenantId: string | null;
+  readonly actorType: ActorType;
   readonly avatar: string | null;
   readonly email: string | null;
   readonly phoneNumber: string | null;
@@ -67,10 +68,10 @@ export class User extends AggregateRoot implements IUser {
   }
 
   async created() {
-    this.apply(new UserCreatedEvent(this.id, this.username, this.domain));
+    this.apply(new UserCreatedEvent(this.id, this.username, this.tenantId));
   }
 
   async deleted() {
-    this.apply(new UserDeletedEvent(this.id, this.username, this.domain));
+    this.apply(new UserDeletedEvent(this.id, this.username, this.tenantId));
   }
 }

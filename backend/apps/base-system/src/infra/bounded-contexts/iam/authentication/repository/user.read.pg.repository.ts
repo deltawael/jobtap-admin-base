@@ -15,7 +15,8 @@ export class UserReadRepository implements UserReadRepoPort {
   private readonly USER_ESSENTIAL_FIELDS = {
     id: true,
     username: true,
-    domain: true,
+    tenantId: true,
+    actorType: true,
     avatar: true,
     email: true,
     phoneNumber: true,

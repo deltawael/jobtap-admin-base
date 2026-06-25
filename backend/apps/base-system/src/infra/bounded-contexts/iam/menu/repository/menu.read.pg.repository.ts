@@ -27,76 +27,6 @@ export class MenuReadPostgresRepository implements MenuReadRepoPort {
     });
   }
 
-  async findMenusByRoleCode(
-    roleCode: string[],
-    domain: string,
-  ): Promise<Readonly<MenuProperties[]> | []> {
-    const roles = await this.prisma.sysRole.findMany({
-      where: {
-        code: {
-          in: roleCode,
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    const roleIds = roles.map((role) => role.id);
-
-    const roleMenus = await this.prisma.sysRoleMenu.findMany({
-      where: {
-        roleId: { in: roleIds },
-        domain: domain,
-      },
-      select: {
-        menuId: true,
-      },
-    });
-
-    const menuIds = roleMenus.map((rm) => rm.menuId);
-
-    if (menuIds.length > 0) {
-      return this.prisma.sysMenu.findMany({
-        where: {
-          id: { in: menuIds },
-          status: Status.ENABLED,
-        },
-      });
-    }
-
-    return [];
-  }
-
-  async findMenusByRoleId(
-    roleId: string,
-    domain: string,
-  ): Promise<Readonly<MenuProperties[]> | []> {
-    const roleMenus = await this.prisma.sysRoleMenu.findMany({
-      where: {
-        roleId: roleId,
-        domain: domain,
-      },
-      select: {
-        menuId: true,
-      },
-    });
-
-    const menuIds = roleMenus.map((rm) => rm.menuId);
-
-    if (menuIds.length > 0) {
-      return this.prisma.sysMenu.findMany({
-        where: {
-          id: { in: menuIds },
-          status: Status.ENABLED,
-          constant: false,
-        },
-      });
-    }
-
-    return [];
-  }
-
   async getConstantRoutes(): Promise<Readonly<MenuProperties[]> | []> {
     return this.prisma.sysMenu.findMany({
       where: {
@@ -115,7 +45,7 @@ export class MenuReadPostgresRepository implements MenuReadRepoPort {
   ): Promise<MenuTreeProperties[] | []> {
     return this.prisma.sysMenu.findMany({
       where: {
-        constant: constant,
+        constant,
       },
     });
   }
@@ -128,32 +58,5 @@ export class MenuReadPostgresRepository implements MenuReadRepoPort {
         },
       },
     });
-  }
-
-  async findMenuIdsByUserId(userId: string, domain: string): Promise<number[]> {
-    const roleIds = await this.prisma.sysUserRole
-      .findMany({
-        where: {
-          userId,
-        },
-        select: {
-          roleId: true,
-        },
-      })
-      .then((results) => results.map((item) => item.roleId));
-
-    return this.prisma.sysRoleMenu
-      .findMany({
-        where: {
-          roleId: {
-            in: roleIds,
-          },
-          domain,
-        },
-        select: {
-          menuId: true,
-        },
-      })
-      .then((results) => results.map((item) => item.menuId));
   }
 }

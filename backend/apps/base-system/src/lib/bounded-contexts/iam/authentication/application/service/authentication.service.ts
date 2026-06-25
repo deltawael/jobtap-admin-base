@@ -68,7 +68,7 @@ export class AuthenticationService {
         tokens.refreshToken,
         tokensAggregate.userId,
         tokensAggregate.username,
-        tokensAggregate.domain,
+        tokensAggregate.tenantId,
         dto.ip,
         dto.region,
         dto.userAgent,
@@ -99,8 +99,8 @@ export class AuthenticationService {
       throw new BadRequestException(loginResult.message);
     }
 
-    const tenantId = (user as any).tenantId ?? null;
-    const actorType = this.resolveActorType(user as any);
+    const tenantId = user.tenantId ?? null;
+    const actorType = this.resolveActorType(user);
 
     const tokens = await this.generateAccessToken(
       user.id,
@@ -128,7 +128,7 @@ export class AuthenticationService {
         tokens.refreshToken,
         user.id,
         user.username,
-        user.domain,
+        tenantId,
         dto.ip,
         dto.address,
         dto.userAgent,
@@ -171,7 +171,7 @@ export class AuthenticationService {
     return { token: accessToken, refreshToken };
   }
 
-  private resolveActorType(user: any): IAuthentication['actorType'] {
+  private resolveActorType(user: { actorType: IAuthentication['actorType']; tenantId: string | null }): IAuthentication['actorType'] {
     if (user?.actorType) {
       return user.actorType;
     }

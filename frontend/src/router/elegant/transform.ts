@@ -205,5 +205,3 @@ export function getRouteName(path: RoutePath) {
 
   return routeName;
 }
-
-

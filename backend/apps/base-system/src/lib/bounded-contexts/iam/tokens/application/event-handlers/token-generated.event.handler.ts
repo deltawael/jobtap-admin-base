@@ -22,7 +22,7 @@ export class TokenGeneratedEventHandler
       status: TokenStatus.UNUSED,
       userId: event.userId,
       username: event.username,
-      domain: event.domain,
+      tenantId: event.tenantId,
       ip: event.ip,
       port: event.port,
       address: event.address,

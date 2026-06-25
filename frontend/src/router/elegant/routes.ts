@@ -188,21 +188,21 @@ export const generatedRoutes: GeneratedRoute[] = [
         }
       },
       {
-        name: 'tenant_user',
-        path: '/tenant/user',
-        component: 'view.tenant_user',
-        meta: {
-          title: 'tenant_user',
-          i18nKey: 'route.tenant_user'
-        }
-      },
-      {
         name: 'tenant_role',
         path: '/tenant/role',
         component: 'view.tenant_role',
         meta: {
           title: 'tenant_role',
           i18nKey: 'route.tenant_role'
+        }
+      },
+      {
+        name: 'tenant_user',
+        path: '/tenant/user',
+        component: 'view.tenant_user',
+        meta: {
+          title: 'tenant_user',
+          i18nKey: 'route.tenant_user'
         }
       },
       {
@@ -217,4 +217,3 @@ export const generatedRoutes: GeneratedRoute[] = [
     ]
   }
 ];
-

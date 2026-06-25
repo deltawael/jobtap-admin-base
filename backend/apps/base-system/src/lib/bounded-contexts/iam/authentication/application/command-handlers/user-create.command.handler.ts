@@ -30,9 +30,10 @@ export class UserCreateHandler implements ICommandHandler<UserCreateCommand, voi
     const userCreateProperties: UserCreateProperties = {
       id: UlidGenerator.generate(),
       username: command.username,
+      tenantId: command.tenantId,
+      actorType: command.actorType,
       nickName: command.nickName,
       password: hashedPassword.getValue(),
-      domain: command.domain,
       status: command.status,
       avatar: command.avatar,
       email: command.email,

@@ -6,6 +6,8 @@ CREATE TYPE "Status" AS ENUM ('ENABLED', 'DISABLED', 'BANNED');
 
 -- CreateEnum
 CREATE TYPE "CapabilityKind" AS ENUM ('action', 'view');
+
+-- CreateEnum
 CREATE TYPE "CapabilityBindingMode" AS ENUM ('ANY_OF', 'ALL_OF');
 
 -- CreateEnum
@@ -28,7 +30,7 @@ CREATE TABLE "sys_tokens" (
     "status" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
     "username" TEXT NOT NULL,
-    "domain" TEXT NOT NULL,
+    "tenant_id" TEXT,
     "login_time" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "ip" TEXT NOT NULL,
     "port" INTEGER,
@@ -47,7 +49,6 @@ CREATE TABLE "sys_user" (
     "id" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "password" TEXT NOT NULL,
-    "domain" TEXT NOT NULL,
     "tenant_id" TEXT,
     "actor_type" "ActorType" NOT NULL DEFAULT 'tenant_user',
     "built_in" BOOLEAN NOT NULL DEFAULT false,
@@ -76,21 +77,6 @@ CREATE TABLE "casbin_rule" (
     "v5" TEXT,
 
     CONSTRAINT "casbin_rule_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "sys_domain" (
-    "id" TEXT NOT NULL,
-    "code" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT,
-    "status" "Status" NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "created_by" TEXT NOT NULL,
-    "updated_at" TIMESTAMP(3),
-    "updated_by" TEXT,
-
-    CONSTRAINT "sys_domain_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -341,7 +327,7 @@ CREATE TABLE "sys_login_log" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
     "username" TEXT NOT NULL,
-    "domain" TEXT NOT NULL,
+    "tenant_id" TEXT,
     "login_time" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "ip" TEXT NOT NULL,
     "port" INTEGER,
@@ -360,7 +346,7 @@ CREATE TABLE "sys_operation_log" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
     "username" TEXT NOT NULL,
-    "domain" TEXT NOT NULL,
+    "tenant_id" TEXT,
     "module_name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "request_id" TEXT NOT NULL,
@@ -409,15 +395,6 @@ CREATE TABLE "sys_menu" (
 );
 
 -- CreateTable
-CREATE TABLE "sys_role_menu" (
-    "role_id" TEXT NOT NULL,
-    "menu_id" INTEGER NOT NULL,
-    "domain" TEXT NOT NULL,
-
-    CONSTRAINT "sys_role_menu_pkey" PRIMARY KEY ("role_id","menu_id","domain")
-);
-
--- CreateTable
 CREATE TABLE "audit_logs" (
     "id" TEXT NOT NULL,
     "tenant_id" TEXT,
@@ -436,7 +413,7 @@ CREATE TABLE "audit_logs" (
 -- CreateTable
 CREATE TABLE "sys_access_key" (
     "id" TEXT NOT NULL,
-    "domain" TEXT NOT NULL,
+    "tenant_id" TEXT,
     "access_key_id" TEXT NOT NULL,
     "access_key_secret" TEXT NOT NULL,
     "status" "Status" NOT NULL,
@@ -454,6 +431,9 @@ CREATE UNIQUE INDEX "sys_tokens_access_token_key" ON "sys_tokens"("access_token"
 CREATE UNIQUE INDEX "sys_tokens_refresh_token_key" ON "sys_tokens"("refresh_token");
 
 -- CreateIndex
+CREATE INDEX "sys_tokens_tenant_id_idx" ON "sys_tokens"("tenant_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "sys_user_username_key" ON "sys_user"("username");
 
 -- CreateIndex
@@ -464,9 +444,6 @@ CREATE UNIQUE INDEX "sys_user_phone_number_key" ON "sys_user"("phone_number");
 
 -- CreateIndex
 CREATE INDEX "sys_user_tenant_id_idx" ON "sys_user"("tenant_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "sys_domain_code_key" ON "sys_domain"("code");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "tenants_code_key" ON "tenants"("code");
@@ -514,6 +491,12 @@ CREATE INDEX "capability_view_bindings_capability_id_resource_type_idx" ON "capa
 CREATE UNIQUE INDEX "sys_organization_code_key" ON "sys_organization"("code");
 
 -- CreateIndex
+CREATE INDEX "sys_login_log_tenant_id_idx" ON "sys_login_log"("tenant_id");
+
+-- CreateIndex
+CREATE INDEX "sys_operation_log_tenant_id_idx" ON "sys_operation_log"("tenant_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "sys_menu_route_name_key" ON "sys_menu"("route_name");
 
 -- CreateIndex
@@ -524,4 +507,7 @@ CREATE UNIQUE INDEX "sys_access_key_access_key_id_key" ON "sys_access_key"("acce
 
 -- CreateIndex
 CREATE UNIQUE INDEX "sys_access_key_access_key_secret_key" ON "sys_access_key"("access_key_secret");
+
+-- CreateIndex
+CREATE INDEX "sys_access_key_tenant_id_idx" ON "sys_access_key"("tenant_id");
 

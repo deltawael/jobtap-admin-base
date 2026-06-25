@@ -1,11 +1,12 @@
 import { ICommand } from '@nestjs/cqrs';
-import { Status } from '@prisma/client';
+import { ActorType, Status } from '@prisma/client';
 
 export class UserCreateCommand implements ICommand {
   constructor(
     readonly username: string,
     readonly password: string,
-    readonly domain: string,
+    readonly tenantId: string | null,
+    readonly actorType: ActorType,
     readonly nickName: string,
     readonly status: Status,
     readonly avatar: string | null,
