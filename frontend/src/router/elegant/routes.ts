@@ -215,5 +215,17 @@ export const generatedRoutes: GeneratedRoute[] = [
         }
       }
     ]
+  },
+  {
+    name: 'user-center',
+    path: '/user-center',
+    component: 'layout.base$view.user-center',
+    meta: {
+      title: 'user-center',
+      i18nKey: 'route.user-center',
+      constant: true,
+      requiresAuth: true,
+      hideInMenu: true
+    }
   }
 ];

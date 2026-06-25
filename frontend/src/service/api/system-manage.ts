@@ -172,3 +172,30 @@ export function updateUser(req: UserModel) {
 export function deleteUser(id: string) {
   return request({ url: `/user/${id}`, method: 'delete' });
 }
+
+export type SelfProfileModel = Pick<Api.SystemManage.SelfProfile, 'avatar' | 'nickName' | 'phoneNumber' | 'email'>;
+
+export type ChangeOwnPasswordModel = {
+  oldPassword: string;
+  newPassword: string;
+};
+
+export type ChangeUserPasswordModel = {
+  newPassword: string;
+};
+
+export function fetchGetSelfProfile() {
+  return request<Api.SystemManage.SelfProfile>({ url: '/user/profile', method: 'get' });
+}
+
+export function updateSelfProfile(req: SelfProfileModel) {
+  return request<Api.SystemManage.SelfProfile>({ url: '/user/profile', method: 'put', data: req });
+}
+
+export function changeOwnPassword(req: ChangeOwnPasswordModel) {
+  return request({ url: '/user/change-password', method: 'put', data: req });
+}
+
+export function changeManagedUserPassword(userId: string, req: ChangeUserPasswordModel) {
+  return request({ url: `/user/${userId}/change-password`, method: 'put', data: req });
+}

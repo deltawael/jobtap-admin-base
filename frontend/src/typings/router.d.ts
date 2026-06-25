@@ -30,6 +30,8 @@ declare module 'vue-router' {
      * when it is set to true, there will be no login verification and no permission verification to access the route
      */
     constant?: boolean | null;
+    /** Whether the route still requires login even when it is a constant route */
+    requiresAuth?: boolean | null;
     /**
      * Iconify icon
      *

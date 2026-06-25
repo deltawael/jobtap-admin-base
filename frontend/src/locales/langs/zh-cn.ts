@@ -167,6 +167,7 @@ const local: App.I18n.Schema = {
     500: '服务器错误',
     'iframe-page': '外链页面',
     home: '首页',
+    'user-center': '个人中心',
     platform: '平台管理',
     platform_tenant: '租户管理',
     'platform_role-template': '角色模板',
@@ -229,6 +230,37 @@ const local: App.I18n.Schema = {
       },
       creativity: '创意'
     },
+    userCenter: {
+      title: '个人中心',
+      basicTitle: '基本资料',
+      passwordTitle: '修改密码',
+      saveProfile: '保存资料',
+      reloginTip: '密码修改成功后会退出当前登录，请使用新密码重新登录。',
+      passwordReuseError: '新密码不能与旧密码相同',
+      fields: {
+        username: '用户名',
+        tenantName: '所属租户',
+        actorType: '主体类型',
+        roles: '角色',
+        status: '状态',
+        avatar: '头像',
+        nickName: '昵称',
+        phoneNumber: '手机号',
+        email: '邮箱',
+        oldPassword: '当前密码',
+        newPassword: '新密码',
+        confirmPassword: '确认新密码'
+      },
+      placeholders: {
+        avatar: '请输入头像地址',
+        nickName: '请输入昵称',
+        phoneNumber: '请输入手机号',
+        email: '请输入邮箱',
+        oldPassword: '请输入当前密码',
+        newPassword: '请输入新密码',
+        confirmPassword: '请再次输入新密码'
+      }
+    },
     manage: {
       common: {
         status: {
@@ -274,6 +306,8 @@ const local: App.I18n.Schema = {
         },
         addUser: '新增用户',
         editUser: '编辑用户',
+        changePassword: '修改密码',
+        passwordDialogTitle: '修改用户密码',
         gender: {
           male: '男',
           female: '女'

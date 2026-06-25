@@ -17,16 +17,25 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ActorType, Prisma, Status } from '@prisma/client';
 
+import { Password } from '@app/base-system/lib/bounded-contexts/iam/authentication/domain/password.value-object';
+
 import { ApiRes } from '@lib/infra/rest/res.response';
 import { PrismaService } from '@lib/shared/prisma/prisma.service';
 import { IAuthentication } from '@lib/typings/global';
 
 import { PageUsersDto } from '../dto/page-users.dto';
+import {
+  ChangeOwnPasswordDto,
+  ChangeUserPasswordDto,
+  UpdateSelfProfileDto,
+} from '../dto/user-profile.dto';
 import { UserCreateDto, UserUpdateDto } from '../dto/user.dto';
 
 @ApiTags('User - Module')
 @Controller('user')
 export class UserController {
+  private static readonly USER_PASSWORD_MANAGE_CAPABILITY = 'tenant.user.password.manage';
+
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
@@ -81,12 +90,13 @@ export class UserController {
     const tenantId = this.resolveRequestedTenantScope(actor, dto.tenantId);
     const roles = await this.ensureRolesScoped(tenantId, dto.roleIds);
     const actorType = await this.resolveActorTypeByRoles(roles);
+    const hashedPassword = await Password.hash(dto.password);
 
     const created = await this.prisma.sysUser.create({
       data: {
         id: randomUUID(),
         username: dto.username,
-        password: dto.password,
+        password: hashedPassword.getValue(),
         tenantId,
         actorType,
         built_in: false,
@@ -101,6 +111,59 @@ export class UserController {
     });
 
     await this.syncUserRoles(created.id, dto.roleIds);
+    return ApiRes.ok();
+  }
+
+  @Get('profile')
+  @ApiOperation({ summary: 'Get current user profile' })
+  async getProfile(@Request() req: any): Promise<ApiRes<any>> {
+    const actor = req.user as IAuthentication;
+    return ApiRes.success(await this.buildSelfProfile(actor.userId));
+  }
+
+  @Put('profile')
+  @ApiOperation({ summary: 'Update current user profile' })
+  async updateProfile(@Body() dto: UpdateSelfProfileDto, @Request() req: any): Promise<ApiRes<any>> {
+    const actor = req.user as IAuthentication;
+    await this.requireUserById(actor.userId);
+
+    await this.prisma.sysUser.update({
+      where: { id: actor.userId },
+      data: {
+        avatar: this.normalizeOptionalText(dto.avatar),
+        nickName: dto.nickName,
+        phoneNumber: this.normalizeOptionalText(dto.phoneNumber),
+        email: this.normalizeOptionalText(dto.email),
+        updatedBy: actor.userId,
+      },
+    });
+
+    return ApiRes.success(await this.buildSelfProfile(actor.userId));
+  }
+
+  @Put('change-password')
+  @ApiOperation({ summary: 'Change current user password' })
+  async changeOwnPassword(@Body() dto: ChangeOwnPasswordDto, @Request() req: any): Promise<ApiRes<null>> {
+    const actor = req.user as IAuthentication;
+    const existing = await this.requireUserById(actor.userId);
+
+    const passwordMatched = await this.comparePassword(existing.password, dto.oldPassword);
+    if (!passwordMatched) {
+      throw new BadRequestException('Old password is incorrect');
+    }
+    if (dto.oldPassword === dto.newPassword) {
+      throw new BadRequestException('New password cannot be the same as old password');
+    }
+
+    const hashedPassword = await Password.hash(dto.newPassword);
+    await this.prisma.sysUser.update({
+      where: { id: actor.userId },
+      data: {
+        password: hashedPassword.getValue(),
+        updatedBy: actor.userId,
+      },
+    });
+
     return ApiRes.ok();
   }
 
@@ -141,6 +204,34 @@ export class UserController {
     return ApiRes.ok();
   }
 
+  @Put(':id/change-password')
+  @ApiOperation({ summary: 'Change user password by administrator' })
+  async changeUserPassword(
+    @Param('id') id: string,
+    @Body() dto: ChangeUserPasswordDto,
+    @Request() req: any,
+  ): Promise<ApiRes<null>> {
+    const actor = req.user as IAuthentication;
+    await this.ensureActorHasCapability(actor.userId, UserController.USER_PASSWORD_MANAGE_CAPABILITY);
+
+    const existing = await this.requireUserById(id);
+    this.assertTenantAccess(actor, existing.tenantId);
+    if (existing.built_in && actor.actorType !== 'system_admin') {
+      throw new ForbiddenException('Built-in users cannot be updated by tenant actors');
+    }
+
+    const hashedPassword = await Password.hash(dto.newPassword);
+    await this.prisma.sysUser.update({
+      where: { id },
+      data: {
+        password: hashedPassword.getValue(),
+        updatedBy: actor.userId,
+      },
+    });
+
+    return ApiRes.ok();
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a User' })
   async deleteUser(@Request() req: any, @Param('id') id: string): Promise<ApiRes<null>> {
@@ -174,6 +265,11 @@ export class UserController {
     return actor.tenantId ?? null;
   }
 
+  private normalizeOptionalText(value: string | null | undefined) {
+    const normalized = value?.trim();
+    return normalized ? normalized : null;
+  }
+
   private resolveRequestedTenantScope(actor: IAuthentication, requestedTenantId?: string | null) {
     if (actor.actorType === 'system_admin') return requestedTenantId ?? null;
     const tenantId = this.resolveTenantScope(actor);
@@ -205,6 +301,103 @@ export class UserController {
     if (!tenantId || tenantId !== actor.tenantId) {
       throw new ForbiddenException('Cross-tenant access denied');
     }
+  }
+
+  private async requireUserById(userId: string) {
+    const user = await this.prisma.sysUser.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
+  private async comparePassword(hashedPassword: string, plainPassword: string) {
+    try {
+      return await Password.fromHashed(hashedPassword).compare(plainPassword);
+    } catch {
+      return false;
+    }
+  }
+
+  private async buildSelfProfile(userId: string) {
+    const user = await this.requireUserById(userId);
+    const userRoleMappings = await this.prisma.sysUserRole.findMany({ where: { userId } });
+    const roleIds = userRoleMappings.map(item => item.roleId);
+    const [tenant, roles] = await Promise.all([
+      user.tenantId ? this.prisma.tenant.findUnique({ where: { id: user.tenantId } }) : Promise.resolve(null),
+      roleIds.length
+        ? this.prisma.sysRole.findMany({
+            where: { id: { in: roleIds } },
+            orderBy: [{ builtIn: 'desc' }, { createdAt: 'asc' }],
+          })
+        : Promise.resolve([]),
+    ]);
+
+    return {
+      userId: user.id,
+      username: user.username,
+      tenantId: user.tenantId,
+      tenantName: user.tenantId ? tenant?.name ?? user.tenantId : '平台',
+      actorType: user.actorType,
+      roles: roles.map(item => ({
+        id: item.id,
+        code: item.code,
+        name: item.name,
+      })),
+      avatar: user.avatar,
+      nickName: user.nickName,
+      phoneNumber: user.phoneNumber,
+      email: user.email,
+      status: user.status,
+    };
+  }
+
+  private async ensureActorHasCapability(userId: string, capabilityCode: string) {
+    const capabilityCodes = await this.resolveCapabilityCodes(userId);
+    if (!capabilityCodes.has(capabilityCode)) {
+      throw new ForbiddenException('Capability denied');
+    }
+  }
+
+  private async resolveCapabilityCodes(userId: string) {
+    const userRoles = await this.prisma.sysUserRole.findMany({ where: { userId } });
+    const roleIds = userRoles.map(item => item.roleId);
+    const roles = roleIds.length ? await this.prisma.sysRole.findMany({ where: { id: { in: roleIds } } }) : [];
+    const templateIds = [...new Set(roles.map(item => item.templateId).filter(Boolean))] as string[];
+    const now = new Date();
+    const [roleCapabilities, templateCapabilities, overrides, delegations] = await Promise.all([
+      roleIds.length ? this.prisma.roleCapability.findMany({ where: { roleId: { in: roleIds } } }) : Promise.resolve([]),
+      templateIds.length
+        ? this.prisma.roleTemplateCapability.findMany({ where: { templateId: { in: templateIds } } })
+        : Promise.resolve([]),
+      this.prisma.userScopeOverride.findMany({ where: { userId } }),
+      this.prisma.delegation.findMany({
+        where: {
+          toUserId: userId,
+          status: 'active',
+          startAt: { lte: now },
+          endAt: { gte: now },
+        },
+      }),
+    ]);
+
+    const capabilityIds = [
+      ...new Set([
+        ...roleCapabilities.map(item => item.capabilityId),
+        ...templateCapabilities.map(item => item.capabilityId),
+        ...overrides.map(item => item.capabilityId),
+        ...delegations.map(item => item.capabilityId),
+      ]),
+    ];
+
+    if (!capabilityIds.length) {
+      return new Set<string>();
+    }
+
+    const capabilities = await this.prisma.capability.findMany({
+      where: { id: { in: capabilityIds }, status: Status.ENABLED },
+      select: { code: true },
+    });
+
+    return new Set(capabilities.map(item => item.code));
   }
 
   private async ensureRolesScoped(tenantId: string | null, roleIds: string[]) {

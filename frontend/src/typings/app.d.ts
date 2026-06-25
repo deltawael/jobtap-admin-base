@@ -458,6 +458,37 @@ declare namespace App {
           };
           creativity: string;
         };
+        userCenter: {
+          title: string;
+          basicTitle: string;
+          passwordTitle: string;
+          saveProfile: string;
+          reloginTip: string;
+          passwordReuseError: string;
+          fields: {
+            username: string;
+            tenantName: string;
+            actorType: string;
+            roles: string;
+            status: string;
+            avatar: string;
+            nickName: string;
+            phoneNumber: string;
+            email: string;
+            oldPassword: string;
+            newPassword: string;
+            confirmPassword: string;
+          };
+          placeholders: {
+            avatar: string;
+            nickName: string;
+            phoneNumber: string;
+            email: string;
+            oldPassword: string;
+            newPassword: string;
+            confirmPassword: string;
+          };
+        };
         manage: {
           common: {
             status: {
@@ -503,6 +534,8 @@ declare namespace App {
             };
             addUser: string;
             editUser: string;
+            changePassword: string;
+            passwordDialogTitle: string;
             gender: {
               male: string;
               female: string;

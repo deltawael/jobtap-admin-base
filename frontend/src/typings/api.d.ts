@@ -165,6 +165,24 @@ declare namespace Api {
       email: string | null;
       roleIds: string[];
     }>;
+    type SelfProfileRole = {
+      id: string;
+      code: string;
+      name: string;
+    };
+    type SelfProfile = {
+      userId: string;
+      username: string;
+      tenantId: string | null;
+      tenantName: string | null;
+      actorType: 'system_admin' | 'tenant_admin' | 'tenant_user';
+      roles: SelfProfileRole[];
+      avatar: string | null;
+      nickName: string;
+      phoneNumber: string | null;
+      email: string | null;
+      status: EnableStatus | null;
+    };
     type UserSearchParams = CommonType.RecordNullable<
       Pick<Api.SystemManage.User, 'username' | 'nickName' | 'phoneNumber' | 'email' | 'status' | 'tenantId'> &
         CommonSearchParams & {

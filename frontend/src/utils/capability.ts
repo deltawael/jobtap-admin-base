@@ -29,6 +29,7 @@ const segmentLabelMap: Record<string, string> = {
   dashboard: '看板',
   delegation: '委派',
   org: '组织',
+  password: '密码',
   readonly: '只读',
   reference: '引用',
   resource_catalog: '资源目录',

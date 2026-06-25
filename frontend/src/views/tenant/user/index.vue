@@ -1,13 +1,15 @@
 <script setup lang="tsx">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { NAvatar, NButton, NPopconfirm, NTag } from 'naive-ui';
 import { enableStatusRecord } from '@/constants/business';
 import { deleteUser, fetchGetUserList } from '@/service/api';
 import { useAppStore } from '@/store/modules/app';
 import { useAuthStore } from '@/store/modules/auth';
+import { useAuth } from '@/hooks/business/auth';
 import { useSvgIcon } from '@/hooks/common/icon';
 import { useTable, useTableOperate } from '@/hooks/common/table';
 import { $t } from '@/locales';
+import UserPasswordModal from './modules/user-password-modal.vue';
 import UserOperateDrawer from './modules/user-operate-drawer.vue';
 import UserSearch from './modules/user-search.vue';
 
@@ -17,8 +19,12 @@ defineOptions({
 
 const appStore = useAppStore();
 const authStore = useAuthStore();
+const { hasAuth } = useAuth();
 const isSystemAdmin = computed(() => authStore.userInfo.actorType === 'system_admin');
+const canManageUserPassword = computed(() => hasAuth('tenant.user.password.manage'));
 const { SvgIconVNode } = useSvgIcon();
+const passwordModalVisible = ref(false);
+const passwordTarget = ref<Api.SystemManage.User | null>(null);
 
 const {
   columns,
@@ -45,7 +51,7 @@ const {
     tenantId: null
   },
   columns: () => {
-    const columnList = [
+    const columnList: any[] = [
       { type: 'selection', align: 'center', width: 48 },
       { key: 'index', title: $t('common.index'), align: 'center', width: 64 },
       { key: 'username', title: $t('page.manage.user.userName'), align: 'center', minWidth: 120 },
@@ -53,7 +59,7 @@ const {
         key: 'avatar',
         title: $t('page.manage.user.avatar'),
         align: 'center',
-        minWidth: 80,
+        width: 72,
         render: (row: Api.SystemManage.User) => (
           <NAvatar size="small" src={row.avatar || undefined}>
             {SvgIconVNode({ icon: 'ph:user-circle', fontSize: 18 })}
@@ -81,12 +87,17 @@ const {
         key: 'operate',
         title: $t('common.operate'),
         align: 'center',
-        width: 130,
+        width: 220,
         render: (row: Api.SystemManage.User) => (
           <div class="flex-center gap-8px">
             <NButton type="primary" ghost size="small" onClick={() => edit(row.id)}>
               {$t('common.edit')}
             </NButton>
+            {canManageUserPassword.value ? (
+              <NButton type="warning" ghost size="small" onClick={() => openChangePassword(row)}>
+                {$t('page.manage.user.changePassword')}
+              </NButton>
+            ) : null}
             <NPopconfirm onPositiveClick={() => handleDelete(row.id)}>
               {{
                 default: () => $t('common.confirmDelete'),
@@ -110,7 +121,7 @@ const {
         render: (row: Api.SystemManage.User) => <span>{row.tenantId ? row.tenantName || row.tenantId : '平台'}</span>
       });
     }
-    return columnList as any;
+    return columnList;
   }
 });
 
@@ -119,6 +130,11 @@ const { drawerVisible, operateType, editingData, handleAdd, handleEdit, checkedR
 
 async function handleBatchDelete() {
   onBatchDeleted();
+}
+
+function openChangePassword(row: Api.SystemManage.User) {
+  passwordTarget.value = row;
+  passwordModalVisible.value = true;
 }
 
 async function handleDelete(id: string) {
@@ -152,13 +168,14 @@ function edit(id: string) {
         :data="data"
         size="small"
         :flex-height="!appStore.isMobile"
-        :scroll-x="1120"
+        :scroll-x="1320"
         :loading="loading"
         remote
         :row-key="row => row.id"
         :pagination="mobilePagination"
         class="sm:h-full"
       />
+      <UserPasswordModal v-model:visible="passwordModalVisible" :row-data="passwordTarget" />
       <UserOperateDrawer
         v-model:visible="drawerVisible"
         :operate-type="operateType"

@@ -167,6 +167,7 @@ const local: App.I18n.Schema = {
     500: 'Server Error',
     'iframe-page': 'Iframe',
     home: 'Home',
+    'user-center': 'User Center',
     platform: 'Platform Manage',
     platform_tenant: 'Tenant Manage',
     'platform_role-template': 'Role Templates',
@@ -229,6 +230,38 @@ const local: App.I18n.Schema = {
       },
       creativity: 'Creativity'
     },
+    userCenter: {
+      title: 'User Center',
+      basicTitle: 'Basic Profile',
+      passwordTitle: 'Change Password',
+      saveProfile: 'Save Profile',
+      reloginTip:
+        'After the password is changed, the current login will be cleared. Please log in again with the new password.',
+      passwordReuseError: 'The new password cannot be the same as the old password',
+      fields: {
+        username: 'Username',
+        tenantName: 'Tenant',
+        actorType: 'Actor Type',
+        roles: 'Roles',
+        status: 'Status',
+        avatar: 'Avatar',
+        nickName: 'Nick Name',
+        phoneNumber: 'Phone Number',
+        email: 'Email',
+        oldPassword: 'Current Password',
+        newPassword: 'New Password',
+        confirmPassword: 'Confirm Password'
+      },
+      placeholders: {
+        avatar: 'Please enter avatar url',
+        nickName: 'Please enter nick name',
+        phoneNumber: 'Please enter phone number',
+        email: 'Please enter email',
+        oldPassword: 'Please enter current password',
+        newPassword: 'Please enter new password',
+        confirmPassword: 'Please enter the password again'
+      }
+    },
     manage: {
       common: {
         status: {
@@ -274,6 +307,8 @@ const local: App.I18n.Schema = {
         },
         addUser: 'Add User',
         editUser: 'Edit User',
+        changePassword: 'Change Password',
+        passwordDialogTitle: 'Change User Password',
         gender: {
           male: 'Male',
           female: 'Female'

@@ -38,6 +38,7 @@ declare module "@elegant-router/types" {
     "tenant_role": "/tenant/role";
     "tenant_user": "/tenant/user";
     "tenant_user-auth-profile": "/tenant/user-auth-profile";
+    "user-center": "/user-center";
   };
 
   /**
@@ -79,6 +80,7 @@ declare module "@elegant-router/types" {
     | "login"
     | "platform"
     | "tenant"
+    | "user-center"
   >;
 
   /**
@@ -113,6 +115,7 @@ declare module "@elegant-router/types" {
     | "tenant_role"
     | "tenant_user-auth-profile"
     | "tenant_user"
+    | "user-center"
   >;
 
   /**
