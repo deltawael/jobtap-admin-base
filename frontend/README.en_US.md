@@ -26,4 +26,4 @@ Customer-facing branding has been centralized. Update these files first when pre
 
 For the full workflow, see:
 
-- `../docs/customer-branding.md`
+- `../docs/guide/customer-branding.md`

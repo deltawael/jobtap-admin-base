@@ -1,8 +1,16 @@
-# Environment Bootstrap
+# 环境初始化与基线
 
-## 1. 基线范围
+## 1. 适用范围
 
-当前仓库使用单一目标态基线迁移：
+本文用于说明以下场景的标准做法：
+
+- 本地开发环境初始化
+- 新环境首次部署
+- 基于当前目标态基线重建数据库
+
+## 2. 当前数据库基线
+
+当前仓库只保留一条目标态基线迁移：
 
 - `backend/prisma/migrations/0_target_state_baseline`
 
@@ -13,13 +21,13 @@
 - `scope_policies / user_scope_overrides / delegations`
 - `capability_ui_bindings / capability_api_bindings / capability_view_bindings`
 - `audit_logs`
-- 资源目录支持 `directory / menu / button`
+- 资源目录的 `directory / menu / button` 三类资源
 
-旧迁移链和旧 SQL 初始化路径不再作为当前推荐方案。
+数据库初始化统一走 Prisma migration + seed，不再保留其他基线路径。
 
-## 2. 新环境初始化
+## 3. 新环境初始化
 
-### 2.1 本地开发
+### 3.1 本地开发
 
 ```bash
 docker-compose -f docker-compose.middleware.yml up -d
@@ -36,20 +44,20 @@ pnpm install
 pnpm dev
 ```
 
-### 2.2 完整 Docker Compose
+### 3.2 完整 Docker Compose
 
 ```bash
 docker-compose up -d
 ```
 
-`db-init` 会自动执行：
+`db-init` 容器会自动执行：
 
 ```bash
 pnpm exec prisma migrate deploy --schema prisma/schema.prisma
 pnpm exec prisma db seed
 ```
 
-## 3. 初始化基线内容
+## 4. 初始化基线内容
 
 新环境初始化后至少会生成：
 
@@ -64,7 +72,7 @@ pnpm exec prisma db seed
 - 能力目录前端 3 级树投影与角色模板叶子 capability 基线
 - 3 个管理员账号
 
-### 3.1 初始化账号
+### 4.1 初始化账号
 
 | username | actorType | tenantId | Tenant.code（租户主数据编码） | status | 用途 |
 | --- | --- | --- | --- | --- | --- |
@@ -72,13 +80,14 @@ pnpm exec prisma db seed
 | `tenant_admin_a` | `tenant_admin` | `tenant-a` | `tenant_a` | `ENABLED` | 租户 A 管理员 |
 | `tenant_admin_b` | `tenant_admin` | `tenant-b` | `tenant_b` | `ENABLED` | 租户 B 管理员 |
 
-约束：
+约束如下：
 
 - 不再初始化业务演示账号。
-- `boss / manager / staff / readonly` 只作为模板存在，供租户后续复制创建角色。
-- `system_admin` 不绑定租户；两个租户管理员必须绑定各自租户。`Tenant.code` 只属于租户主数据，不进入 JWT 或 `IAuthentication`。
+- `boss / manager / staff / readonly` 仅作为模板存在，供租户后续复制创建角色。
+- `system_admin` 不绑定租户；两个租户管理员必须绑定各自租户。
+- `Tenant.code` 只属于租户主数据，不进入 JWT 或 `IAuthentication`。
 
-### 3.2 初始化密码策略
+### 4.2 初始化密码策略
 
 当前基线的管理员账号使用同一份默认密码哈希，定义在：
 
@@ -88,17 +97,19 @@ pnpm exec prisma db seed
 
 - 开发环境可以直接使用当前种子哈希。
 - 测试 / 生产环境在执行 `db seed` 前替换默认哈希，或初始化完成后立即重置管理员密码。
-- 本仓库当前基线未实现“首次登录强制改密”流程；如果项目需要，应作为独立业务需求追加。
+- 当前基线未实现“首次登录强制改密”流程；如有需要，应作为独立业务需求追加。
 - 建议密码策略至少满足：12 位及以上，包含大小写字母、数字和特殊字符。
 
-资源目录约束：
+### 4.3 资源目录约束
 
 - 页面候选项来自前端已注册路由清单，不再依赖后端 `systemManage/getAllPages`。
-- 角色模板保存时只提交叶子 capability id，模块/分组节点仅为前端投影。
+- 角色模板保存时只提交叶子 capability id，模块节点和业务分组节点仅为前端投影。
 
-## 4. 菜单验收
+## 5. 初始化验收
 
-### 4.1 平台管理员应看到
+### 5.1 菜单验收
+
+平台管理员应看到：
 
 - `平台管理 / 租户管理`
 - `平台管理 / 角色模板`
@@ -106,14 +117,14 @@ pnpm exec prisma db seed
 - `平台管理 / 资源目录`
 - `平台管理 / 平台审计`
 
-### 4.2 租户管理员应看到
+租户管理员应看到：
 
 - `租户管理 / 用户管理`
 - `租户管理 / 角色管理`
 - `租户管理 / 用户授权档案`
 - `租户管理 / 租户审计`
 
-## 5. 初始化验收清单
+### 5.2 授权与隔离验收
 
 初始化完成后至少检查：
 
@@ -135,3 +146,8 @@ pnpm prisma:generate
 ```
 
 不要因为新增字段或新增模块重新生成全量 baseline。
+
+## 7. 相关文档
+
+- [底座目标态说明](./base-project-guide.md)
+- [统一授权接入规范](./authz-module-onboarding.md)

@@ -1,27 +1,18 @@
-# 文档索引
+# 文档总入口
 
-建议阅读顺序：
+`docs/` 目录当前分为两类内容：
 
-1. [../README.md](../README.md)
-2. [environment-bootstrap.md](./environment-bootstrap.md)
-3. [base-project-guide.md](./base-project-guide.md)
-4. [authz-module-onboarding.md](./authz-module-onboarding.md)
-5. [customer-branding.md](./customer-branding.md)
+- 使用指引：面向底座使用者、实施者和后续开发者
+- 其他说明：后续如有归档或内部记录，可继续在本目录下按子目录扩展
 
-各文档职责：
+## 使用指引
 
-- `environment-bootstrap.md`
-  - 新环境初始化
-  - 基线种子内容
-  - 初始化账号与验收方法
-- `base-project-guide.md`
-  - 目标态系统边界
-  - 平台侧 / 租户侧菜单结构
-  - 角色模板、能力目录、资源目录的职责
-- `authz-module-onboarding.md`
-  - 新模块如何设计 capability
-  - 按钮级覆盖但非一按钮一能力
-  - 跨资源依赖与 `ANY_OF / ALL_OF` 绑定规则
-  - 角色管理、用户管理完整示例
-- `customer-branding.md`
-  - 品牌名、标题、图标和客户化换标入口
+- [底座使用指引首页](./guide/README.md)
+- [环境初始化与基线](./guide/environment-bootstrap.md)
+- [底座目标态说明](./guide/base-project-guide.md)
+- [统一授权接入规范](./guide/authz-module-onboarding.md)
+- [品牌定制说明](./guide/customer-branding.md)
+
+## 当前说明
+
+- 新增底座使用手册时，默认放入 `docs/guide/` 并在本页补充入口。

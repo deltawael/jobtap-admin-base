@@ -11,12 +11,12 @@
 
 ## 2. 能力设计原则
 
-能力按业务意图设计，不按控件机械拆分。默认优先使用四类：
+能力按业务意图设计，不按控件机械拆分。默认优先使用以下四类能力：
 
-- `read`
-- `manage`
-- `special action`
-- `sensitive view`
+- 读取类（`read`）
+- 管理类（`manage`）
+- 专项动作类（`special action`）
+- 敏感视图类（`sensitive view`）
 
 示例：
 
@@ -90,9 +90,9 @@
 示例：
 
 - `GET /roles`
-- 既可绑定 `tenant.role.read`
-- 也可绑定 `tenant.role.manage`
-- 还可绑定 `tenant.role.reference.read`
+- 可绑定 `tenant.role.read`
+- 可绑定 `tenant.role.manage`
+- 可绑定 `tenant.role.reference.read`
 
 这样用户管理页里的“角色下拉”不需要绕过授权。
 
@@ -106,12 +106,17 @@
 - 普通 CRUD 通常单能力或 `ALL_OF` 单条记录
 - 高风险动作才使用多能力 `ALL_OF`
 
-角色模板/角色配置保存规则：
+角色模板 / 角色配置保存规则：
 
 - 树形能力选择只提交叶子 capability id。
 - 模块节点和业务分组节点只是前端投影，不得入库。
 
-模块上线前必须同时提交 capability 清单、资源映射清单、模板默认分配清单、跨资源依赖清单。
+模块上线前必须同时提交以下内容：
+
+- capability 清单
+- 资源映射清单
+- 模板默认分配清单
+- 跨资源依赖清单
 
 ## 6. 模块交付清单
 
@@ -196,3 +201,8 @@
 - 平台管理能力是否与租户业务能力解耦
 - 租户隔离是否正确
 - 管理菜单是否按角色能力正确展示
+
+## 11. 相关文档
+
+- [环境初始化与基线](./environment-bootstrap.md)
+- [底座目标态说明](./base-project-guide.md)

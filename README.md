@@ -102,10 +102,11 @@ pnpm build
 
 ## 文档导航
 
-- [环境初始化与基线](./docs/environment-bootstrap.md)
-- [底座目标态说明](./docs/base-project-guide.md)
-- [统一授权接入规范](./docs/authz-module-onboarding.md)
-- [品牌定制说明](./docs/customer-branding.md)
+- [文档总入口](./docs/README.md)
+- [环境初始化与基线](./docs/guide/environment-bootstrap.md)
+- [底座目标态说明](./docs/guide/base-project-guide.md)
+- [统一授权接入规范](./docs/guide/authz-module-onboarding.md)
+- [品牌定制说明](./docs/guide/customer-branding.md)
 
 ## 说明
 
