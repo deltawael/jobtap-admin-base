@@ -96,9 +96,8 @@ Runtime database initialization is now unified to Prisma:
 
 - schema changes come from `backend/prisma/migrations`
 - initial data comes from `backend/prisma/seeds`
-- `deploy/postgres` SQL files are retained only as historical reference and are not auto-mounted by Docker Compose
 
-If a local PostgreSQL volume was previously initialized by the legacy SQL path, clear the old volume before running `prisma migrate deploy`, otherwise Prisma will report `P3005`.
+If a local PostgreSQL volume was initialized before the current Prisma baseline, clear the old volume before running `prisma migrate deploy`, otherwise Prisma will report `P3005`.
 
 ## Validation Checklist
 
@@ -119,7 +118,6 @@ After each customer customization, verify the following:
 The following areas are intentionally left unchanged because they are upstream package identities or legacy reference material rather than runtime business branding:
 
 - upstream dependency names such as `@soybeanjs/*`
-- legacy SQL snapshots under `deploy/postgres`
 - third-party avatar/demo asset URLs unless a customer requests replacement
 
 ## Recommendation for Future Customers
