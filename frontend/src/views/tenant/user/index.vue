@@ -1,8 +1,10 @@
 <script setup lang="tsx">
+import { computed } from 'vue';
 import { NAvatar, NButton, NPopconfirm, NTag } from 'naive-ui';
 import { enableStatusRecord } from '@/constants/business';
 import { deleteUser, fetchGetUserList } from '@/service/api';
 import { useAppStore } from '@/store/modules/app';
+import { useAuthStore } from '@/store/modules/auth';
 import { useSvgIcon } from '@/hooks/common/icon';
 import { useTable, useTableOperate } from '@/hooks/common/table';
 import { $t } from '@/locales';
@@ -14,6 +16,8 @@ defineOptions({
 });
 
 const appStore = useAppStore();
+const authStore = useAuthStore();
+const isSystemAdmin = computed(() => authStore.userInfo.actorType === 'system_admin');
 const { SvgIconVNode } = useSvgIcon();
 
 const {
@@ -36,61 +40,78 @@ const {
     username: null,
     nickName: null,
     phoneNumber: null,
-    email: null
+    email: null,
+    tenantScope: 'all',
+    tenantId: null
   },
-  columns: () => [
-    { type: 'selection', align: 'center', width: 48 },
-    { key: 'index', title: $t('common.index'), align: 'center', width: 64 },
-    { key: 'username', title: $t('page.manage.user.userName'), align: 'center', minWidth: 120 },
-    {
-      key: 'avatar',
-      title: $t('page.manage.user.avatar'),
-      align: 'center',
-      minWidth: 80,
-      render: row => (
-        <NAvatar size="small" src={row.avatar || undefined}>
-          {SvgIconVNode({ icon: 'ph:user-circle', fontSize: 18 })}
-        </NAvatar>
-      )
-    },
-    { key: 'nickName', title: $t('page.manage.user.nickName'), align: 'center', minWidth: 120 },
-    { key: 'phoneNumber', title: $t('page.manage.user.userPhone'), align: 'center', width: 140 },
-    { key: 'email', title: $t('page.manage.user.userEmail'), align: 'center', minWidth: 220 },
-    {
-      key: 'status',
-      title: $t('page.manage.user.userStatus'),
-      align: 'center',
-      width: 100,
-      render: row => {
-        if (row.status === null) return null;
-        const tagMap: Record<Api.Common.EnableStatus, NaiveUI.ThemeColor> = { ENABLED: 'success', DISABLED: 'warning' };
-        return <NTag type={tagMap[row.status]}>{$t(enableStatusRecord[row.status])}</NTag>;
+  columns: () => {
+    const columnList = [
+      { type: 'selection', align: 'center', width: 48 },
+      { key: 'index', title: $t('common.index'), align: 'center', width: 64 },
+      { key: 'username', title: $t('page.manage.user.userName'), align: 'center', minWidth: 120 },
+      {
+        key: 'avatar',
+        title: $t('page.manage.user.avatar'),
+        align: 'center',
+        minWidth: 80,
+        render: (row: Api.SystemManage.User) => (
+          <NAvatar size="small" src={row.avatar || undefined}>
+            {SvgIconVNode({ icon: 'ph:user-circle', fontSize: 18 })}
+          </NAvatar>
+        )
+      },
+      { key: 'nickName', title: $t('page.manage.user.nickName'), align: 'center', minWidth: 120 },
+      { key: 'phoneNumber', title: $t('page.manage.user.userPhone'), align: 'center', width: 140 },
+      { key: 'email', title: $t('page.manage.user.userEmail'), align: 'center', minWidth: 220 },
+      {
+        key: 'status',
+        title: $t('page.manage.user.userStatus'),
+        align: 'center',
+        width: 100,
+        render: (row: Api.SystemManage.User) => {
+          if (row.status === null) return null;
+          const tagMap: Record<Api.Common.EnableStatus, NaiveUI.ThemeColor> = {
+            ENABLED: 'success',
+            DISABLED: 'warning'
+          };
+          return <NTag type={tagMap[row.status]}>{$t(enableStatusRecord[row.status])}</NTag>;
+        }
+      },
+      {
+        key: 'operate',
+        title: $t('common.operate'),
+        align: 'center',
+        width: 130,
+        render: (row: Api.SystemManage.User) => (
+          <div class="flex-center gap-8px">
+            <NButton type="primary" ghost size="small" onClick={() => edit(row.id)}>
+              {$t('common.edit')}
+            </NButton>
+            <NPopconfirm onPositiveClick={() => handleDelete(row.id)}>
+              {{
+                default: () => $t('common.confirmDelete'),
+                trigger: () => (
+                  <NButton type="error" ghost size="small">
+                    {$t('common.delete')}
+                  </NButton>
+                )
+              }}
+            </NPopconfirm>
+          </div>
+        )
       }
-    },
-    {
-      key: 'operate',
-      title: $t('common.operate'),
-      align: 'center',
-      width: 130,
-      render: row => (
-        <div class="flex-center gap-8px">
-          <NButton type="primary" ghost size="small" onClick={() => edit(row.id)}>
-            {$t('common.edit')}
-          </NButton>
-          <NPopconfirm onPositiveClick={() => handleDelete(row.id)}>
-            {{
-              default: () => $t('common.confirmDelete'),
-              trigger: () => (
-                <NButton type="error" ghost size="small">
-                  {$t('common.delete')}
-                </NButton>
-              )
-            }}
-          </NPopconfirm>
-        </div>
-      )
+    ];
+    if (isSystemAdmin.value) {
+      columnList.splice(5, 0, {
+        key: 'tenantId',
+        title: '所属租户',
+        align: 'center',
+        minWidth: 140,
+        render: (row: Api.SystemManage.User) => <span>{row.tenantId ? row.tenantName || row.tenantId : '平台'}</span>
+      });
     }
-  ]
+    return columnList as any;
+  }
 });
 
 const { drawerVisible, operateType, editingData, handleAdd, handleEdit, checkedRowKeys, onBatchDeleted, onDeleted } =
@@ -131,7 +152,7 @@ function edit(id: string) {
         :data="data"
         size="small"
         :flex-height="!appStore.isMobile"
-        :scroll-x="962"
+        :scroll-x="1120"
         :loading="loading"
         remote
         :row-key="row => row.id"

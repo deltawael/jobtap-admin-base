@@ -146,7 +146,10 @@ declare namespace Api {
       scopeOverrides: ScopeOverride[];
     };
     type RoleSearchParams = CommonType.RecordNullable<
-      Pick<Api.SystemManage.Role, 'name' | 'code' | 'status'> & CommonSearchParams
+      Pick<Api.SystemManage.Role, 'name' | 'code' | 'status' | 'tenantId'> &
+        CommonSearchParams & {
+          tenantScope?: 'all' | 'platform' | 'tenant' | null;
+        }
     >;
     type RoleList = Common.PaginatingQueryRecord<Role>;
     type AllRole = Pick<Role, 'id' | 'name' | 'code'>;
@@ -155,6 +158,7 @@ declare namespace Api {
       username: string;
       password: string;
       tenantId: string | null;
+      tenantName?: string | null;
       avatar: string | null;
       nickName: string;
       phoneNumber: string | null;
@@ -162,7 +166,10 @@ declare namespace Api {
       roleIds: string[];
     }>;
     type UserSearchParams = CommonType.RecordNullable<
-      Pick<Api.SystemManage.User, 'username' | 'nickName' | 'phoneNumber' | 'email' | 'status'> & CommonSearchParams
+      Pick<Api.SystemManage.User, 'username' | 'nickName' | 'phoneNumber' | 'email' | 'status' | 'tenantId'> &
+        CommonSearchParams & {
+          tenantScope?: 'all' | 'platform' | 'tenant' | null;
+        }
     >;
     type UserList = Common.PaginatingQueryRecord<User>;
     type MenuType = 'directory' | 'menu' | 'button';

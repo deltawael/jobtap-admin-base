@@ -56,6 +56,11 @@ export class UserCreateDto {
   @ArrayNotEmpty({ message: 'roleIds cannot be empty' })
   @IsString({ each: true, message: 'each roleId must be a string' })
   roleIds: string[];
+
+  @ApiProperty({ required: false, nullable: true })
+  @IsOptional()
+  @IsString({ message: 'tenantId must be a string' })
+  tenantId?: string | null;
 }
 
 export class UserUpdateDto extends OmitType(UserCreateDto, ['password']) {

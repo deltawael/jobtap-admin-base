@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 import {
   BadRequestException,
   Body,
@@ -13,8 +15,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Prisma, Status } from '@prisma/client';
-import { randomUUID } from 'crypto';
+import { ActorType, Prisma, Status } from '@prisma/client';
 
 import { ApiRes } from '@lib/infra/rest/res.response';
 import { PrismaService } from '@lib/shared/prisma/prisma.service';
@@ -33,10 +34,9 @@ export class UserController {
   async page(@Request() req: any, @Query() queryDto: PageUsersDto): Promise<ApiRes<any>> {
     const actor = req.user as IAuthentication;
     const paging = this.parsePage(queryDto.current, queryDto.size);
-    const tenantId = this.resolveTenantScope(actor);
-
     const where: Prisma.SysUserWhereInput = {};
-    if (tenantId) where.tenantId = tenantId;
+    const tenantWhere = this.resolveUserTenantWhere(actor, queryDto.tenantScope, queryDto.tenantId);
+    if (tenantWhere !== undefined) where.tenantId = tenantWhere;
     if (queryDto.username) where.username = { contains: queryDto.username };
     if (queryDto.nickName) where.nickName = { contains: queryDto.nickName };
     if ((queryDto as any).phoneNumber) where.phoneNumber = { contains: (queryDto as any).phoneNumber };
@@ -54,15 +54,19 @@ export class UserController {
     ]);
 
     const userIds = records.map(item => item.id);
-    const mappings = userIds.length
-      ? await this.prisma.sysUserRole.findMany({ where: { userId: { in: userIds } } })
-      : [];
+    const tenantIds = [...new Set(records.map(item => item.tenantId).filter(Boolean))] as string[];
+    const [mappings, tenants] = await Promise.all([
+      userIds.length ? this.prisma.sysUserRole.findMany({ where: { userId: { in: userIds } } }) : Promise.resolve([]),
+      tenantIds.length ? this.prisma.tenant.findMany({ where: { id: { in: tenantIds } } }) : Promise.resolve([])
+    ]);
     const roleMap = this.groupByMany(mappings, item => item.userId, item => item.roleId);
+    const tenantMap = new Map(tenants.map(item => [item.id, item.name] as const));
 
     return ApiRes.success({
       records: records.map(item => ({
         ...item,
         roleIds: roleMap.get(item.id) ?? [],
+        tenantName: item.tenantId ? tenantMap.get(item.tenantId) ?? null : null
       })),
       total,
       current: paging.current,
@@ -74,8 +78,9 @@ export class UserController {
   @ApiOperation({ summary: 'Create a New User' })
   async createUser(@Body() dto: UserCreateDto, @Request() req: any): Promise<ApiRes<null>> {
     const actor = req.user as IAuthentication;
-    const tenantId = this.requireTenantScope(actor);
-    await this.ensureRolesScoped(tenantId, dto.roleIds);
+    const tenantId = this.resolveRequestedTenantScope(actor, dto.tenantId);
+    const roles = await this.ensureRolesScoped(tenantId, dto.roleIds);
+    const actorType = await this.resolveActorTypeByRoles(roles);
 
     const created = await this.prisma.sysUser.create({
       data: {
@@ -83,7 +88,7 @@ export class UserController {
         username: dto.username,
         password: dto.password,
         tenantId,
-        actorType: 'tenant_user',
+        actorType,
         built_in: false,
         avatar: dto.avatar,
         email: dto.email,
@@ -111,12 +116,19 @@ export class UserController {
       throw new ForbiddenException('Built-in users cannot be updated by tenant actors');
     }
 
-    await this.ensureRolesScoped(existing.tenantId, dto.roleIds);
+    const tenantId = dto.tenantId === undefined ? existing.tenantId : this.resolveRequestedTenantScope(actor, dto.tenantId);
+    if (tenantId !== existing.tenantId) {
+      throw new BadRequestException('User tenant cannot be changed');
+    }
+
+    const roles = await this.ensureRolesScoped(existing.tenantId, dto.roleIds);
+    const actorType = await this.resolveActorTypeByRoles(roles);
 
     await this.prisma.sysUser.update({
       where: { id: dto.id },
       data: {
         username: dto.username,
+        actorType,
         avatar: dto.avatar,
         email: dto.email,
         phoneNumber: dto.phoneNumber,
@@ -162,12 +174,30 @@ export class UserController {
     return actor.tenantId ?? null;
   }
 
-  private requireTenantScope(actor: IAuthentication) {
+  private resolveRequestedTenantScope(actor: IAuthentication, requestedTenantId?: string | null) {
+    if (actor.actorType === 'system_admin') return requestedTenantId ?? null;
     const tenantId = this.resolveTenantScope(actor);
-    if (!tenantId) {
-      throw new ForbiddenException('Tenant context required');
+    if (!tenantId) throw new ForbiddenException('Tenant context required');
+    if (requestedTenantId !== undefined && requestedTenantId !== tenantId) {
+      throw new ForbiddenException('Cross-tenant access denied');
     }
     return tenantId;
+  }
+
+  private resolveUserTenantWhere(
+    actor: IAuthentication,
+    tenantScope?: 'all' | 'platform' | 'tenant',
+    tenantId?: string | null
+  ): Prisma.StringNullableFilter | string | null | undefined {
+    if (actor.actorType !== 'system_admin') {
+      return actor.tenantId ?? null;
+    }
+    if (tenantScope === 'platform') return null;
+    if (tenantScope === 'tenant') {
+      return tenantId ? tenantId : { not: null };
+    }
+    if (tenantId !== undefined && tenantId !== null) return tenantId;
+    return undefined;
   }
 
   private assertTenantAccess(actor: IAuthentication, tenantId: string | null) {
@@ -178,7 +208,7 @@ export class UserController {
   }
 
   private async ensureRolesScoped(tenantId: string | null, roleIds: string[]) {
-    if (!roleIds.length) return;
+    if (!roleIds.length) return [];
     const roles = await this.prisma.sysRole.findMany({ where: { id: { in: roleIds } } });
     if (roles.length !== roleIds.length) {
       throw new BadRequestException('Role not found');
@@ -186,6 +216,18 @@ export class UserController {
     if (roles.some(item => item.tenantId !== tenantId)) {
       throw new ForbiddenException('Role does not belong to the current tenant');
     }
+
+    return roles;
+  }
+
+  private async resolveActorTypeByRoles(roles: Array<{ templateId: string | null }>): Promise<ActorType> {
+    const templateIds = [...new Set(roles.map(item => item.templateId).filter(Boolean))] as string[];
+    if (!templateIds.length) return ActorType.tenant_user;
+    const templates = await this.prisma.roleTemplate.findMany({ where: { id: { in: templateIds } } });
+    const actorTypes = new Set(templates.map(item => item.actorType));
+    if (actorTypes.has(ActorType.system_admin)) return ActorType.system_admin;
+    if (actorTypes.has(ActorType.tenant_admin)) return ActorType.tenant_admin;
+    return ActorType.tenant_user;
   }
 
   private async syncUserRoles(userId: string, roleIds: string[]) {

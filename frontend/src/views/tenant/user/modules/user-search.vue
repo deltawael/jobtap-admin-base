@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { enableStatusOptions } from '@/constants/business';
+import { fetchGetTenants } from '@/service/api';
+import { useAuthStore } from '@/store/modules/auth';
 import { useFormRules, useNaiveForm } from '@/hooks/common/form';
 import { translateOptions } from '@/utils/common';
 import { $t } from '@/locales';
@@ -19,6 +21,13 @@ const emit = defineEmits<Emits>();
 const { formRef, validate, restoreValidation } = useNaiveForm();
 
 const model = defineModel<Api.SystemManage.UserSearchParams>('model', { required: true });
+const authStore = useAuthStore();
+const isSystemAdmin = computed(() => authStore.userInfo.actorType === 'system_admin');
+const tenantFilterValue = ref<string>('all');
+const tenantOptions = ref<CommonType.Option<string>[]>([
+  { label: '全部', value: 'all' },
+  { label: '平台', value: 'platform' }
+]);
 
 type RuleKey = Extract<keyof Api.SystemManage.UserSearchParams, 'email' | 'phoneNumber'>;
 
@@ -31,8 +40,48 @@ const rules = computed<Record<RuleKey, App.Global.FormRule>>(() => {
   };
 });
 
+async function loadTenantOptions() {
+  if (!isSystemAdmin.value) return;
+  const { data } = await fetchGetTenants();
+  tenantOptions.value = [
+    { label: '全部', value: 'all' },
+    { label: '平台', value: 'platform' },
+    ...((data || []).map(item => ({ label: item.name, value: item.id })) as CommonType.Option<string>[])
+  ];
+}
+
+function syncTenantFilterValue() {
+  if (!isSystemAdmin.value) return;
+  if (model.value.tenantScope === 'platform') {
+    tenantFilterValue.value = 'platform';
+    return;
+  }
+  if (model.value.tenantScope === 'tenant' && model.value.tenantId) {
+    tenantFilterValue.value = model.value.tenantId;
+    return;
+  }
+  tenantFilterValue.value = 'all';
+}
+
+function handleTenantFilterChange(value: string) {
+  tenantFilterValue.value = value;
+  if (value === 'all') {
+    model.value.tenantScope = 'all';
+    model.value.tenantId = null;
+    return;
+  }
+  if (value === 'platform') {
+    model.value.tenantScope = 'platform';
+    model.value.tenantId = null;
+    return;
+  }
+  model.value.tenantScope = 'tenant';
+  model.value.tenantId = value;
+}
+
 async function reset() {
   await restoreValidation();
+  if (isSystemAdmin.value) handleTenantFilterChange('all');
   emit('reset');
 }
 
@@ -40,6 +89,11 @@ async function search() {
   await validate();
   emit('search');
 }
+
+onMounted(async () => {
+  await loadTenantOptions();
+  syncTenantFilterValue();
+});
 </script>
 
 <template>
@@ -64,6 +118,14 @@ async function search() {
             :placeholder="$t('page.manage.user.form.userStatus')"
             :options="translateOptions(enableStatusOptions)"
             clearable
+          />
+        </NFormItemGi>
+        <NFormItemGi v-if="isSystemAdmin" span="24 s:12 m:6" label="所属租户" path="tenantId" class="pr-24px">
+          <NSelect
+            v-model:value="tenantFilterValue"
+            :options="tenantOptions"
+            placeholder="请选择所属租户"
+            @update:value="handleTenantFilterChange"
           />
         </NFormItemGi>
         <NFormItemGi span="24 m:12" class="pr-24px">

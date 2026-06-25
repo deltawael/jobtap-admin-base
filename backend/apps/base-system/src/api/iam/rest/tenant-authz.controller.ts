@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 import {
   BadRequestException,
   Body,
@@ -23,7 +25,6 @@ import {
   ScopeType,
   Status,
 } from '@prisma/client';
-import { randomUUID } from 'crypto';
 
 import { ApiRes } from '@lib/infra/rest/res.response';
 import { PrismaService } from '@lib/shared/prisma/prisma.service';
@@ -288,9 +289,9 @@ export class TenantAuthzController {
   async listRoles(@Request() req: any, @Query() query: any): Promise<ApiRes<any>> {
     const actor = req.user as IAuthentication;
     const paging = this.parsePage(query);
-    const tenantId = await this.resolveScopedTenantId(actor, query.tenantId);
     const where: Prisma.SysRoleWhereInput = {};
-    if (tenantId) where.tenantId = tenantId;
+    const tenantWhere = await this.resolveRoleTenantWhere(actor, query.tenantScope, query.tenantId);
+    if (tenantWhere !== undefined) where.tenantId = tenantWhere;
     if (query.code) where.code = { contains: query.code };
     if (query.name) where.name = { contains: query.name };
     if (query.status) where.status = query.status;
@@ -305,6 +306,7 @@ export class TenantAuthzController {
   async createRole(@Request() req: any, @Body() body: RolePayload): Promise<ApiRes<any>> {
     const actor = req.user as IAuthentication;
     const tenantId = await this.resolveScopedTenantId(actor, body.tenantId);
+    await this.ensureRoleTemplateMatchesTenant(tenantId, body.templateId ?? null);
     const capabilityIds = await this.resolveRoleCapabilityIds(body.templateId ?? null, body.capabilityIds ?? []);
     const created = await this.prisma.sysRole.create({
       data: { id: randomUUID(), code: body.code, name: body.name, tenantId, templateId: body.templateId ?? null, builtIn: false, description: body.description ?? null, pid: '0', status: body.status ?? Status.ENABLED, createdBy: actor.userId, updatedBy: actor.userId },
@@ -322,14 +324,17 @@ export class TenantAuthzController {
     if (!existing) throw new NotFoundException('Role not found');
     await this.assertRoleAccessible(actor, existing.tenantId);
     const tenantId = body.tenantId === undefined ? existing.tenantId : await this.resolveScopedTenantId(actor, body.tenantId);
-    const capabilityIds = body.capabilityIds ? await this.resolveRoleCapabilityIds(body.templateId ?? existing.templateId, body.capabilityIds) : null;
+    if (tenantId !== existing.tenantId) throw new BadRequestException('Role tenant cannot be changed');
+    const templateId = body.templateId === undefined ? existing.templateId : body.templateId;
+    await this.ensureRoleTemplateMatchesTenant(tenantId, templateId ?? null);
+    const capabilityIds = body.capabilityIds ? await this.resolveRoleCapabilityIds(templateId ?? null, body.capabilityIds) : null;
     const updated = await this.prisma.sysRole.update({
       where: { id },
       data: {
         code: existing.builtIn ? existing.code : body.code ?? existing.code,
         name: body.name ?? existing.name,
         tenantId,
-        templateId: body.templateId === undefined ? existing.templateId : body.templateId,
+        templateId,
         description: body.description === undefined ? existing.description : body.description,
         status: body.status ?? existing.status,
         updatedBy: actor.userId,
@@ -490,6 +495,16 @@ export class TenantAuthzController {
     if (tenantId && scopedTenantId && tenantId !== scopedTenantId) throw new ForbiddenException('Cross-tenant access denied');
   }
 
+  private async resolveRoleTenantWhere(actor: IAuthentication, tenantScope?: string, tenantId?: string | null) {
+    if (!this.isSystemAdmin(actor)) {
+      return await this.resolveScopedTenantId(actor, tenantId ?? null);
+    }
+    if (tenantScope === 'platform') return null;
+    if (tenantScope === 'tenant') return tenantId ? tenantId : { not: null };
+    if (tenantId !== undefined && tenantId !== null) return tenantId;
+    return undefined;
+  }
+
   private async hydrateRoleTemplates(records: any[]) {
     const templateIds = records.map(item => item.id);
     const mappings = templateIds.length ? await this.prisma.roleTemplateCapability.findMany({ where: { templateId: { in: templateIds } } }) : [];
@@ -540,6 +555,21 @@ export class TenantAuthzController {
       mappings.forEach(item => set.add(item.capabilityId));
     }
     return [...set];
+  }
+
+  private async ensureRoleTemplateMatchesTenant(tenantId: string | null, templateId: string | null) {
+    if (!templateId) {
+      if (!tenantId) throw new BadRequestException('Platform roles must use a system_admin template');
+      return;
+    }
+    const template = await this.prisma.roleTemplate.findUnique({ where: { id: templateId } });
+    if (!template) throw new BadRequestException('Role template not found');
+    if (!tenantId && template.actorType !== ActorType.system_admin) {
+      throw new BadRequestException('Platform roles must use a system_admin template');
+    }
+    if (tenantId && template.actorType === ActorType.system_admin) {
+      throw new BadRequestException('Tenant roles cannot use a system_admin template');
+    }
   }
 
   private async syncRoleTemplateCapabilities(templateId: string, capabilityIds: string[]) {

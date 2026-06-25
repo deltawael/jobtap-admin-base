@@ -1,6 +1,7 @@
 export type CapabilityTreeNodeType = 'module' | 'group' | 'capability';
 
 export interface CapabilityTreeNode {
+  [key: string]: unknown;
   key: string;
   value: string;
   label: string;
@@ -12,6 +13,7 @@ export interface CapabilityTreeNode {
   capability?: Api.SystemManage.Capability;
   kind?: Api.SystemManage.Capability['kind'];
   builtIn?: boolean | null;
+  checkboxDisabled?: boolean;
 }
 
 const moduleLabelMap: Record<string, string> = {

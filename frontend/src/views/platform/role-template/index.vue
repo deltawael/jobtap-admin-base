@@ -101,6 +101,14 @@ function syncCapabilitySelection(value: string[]) {
   model.capabilityIds = normalizeCapabilityIds(value, capabilityTree.value);
 }
 
+function renderCapabilityLabel({ option }: any) {
+  const treeNode = option as CapabilityTreeNode;
+  return h('div', { class: 'flex items-center gap-8px py-2px' }, [
+    h('span', { class: 'text-sm text-[#111827]' }, treeNode.label),
+    h('span', { class: 'text-xs text-[#6b7280]' }, treeNode.code)
+  ]);
+}
+
 function openAdd() {
   editingId.value = null;
   selectedCapabilityKeys.value = [];
@@ -171,17 +179,21 @@ onMounted(loadData);
             <NSelect v-model:value="model.status" :options="statusOptions" placeholder="请选择状态" />
           </NFormItem>
           <NFormItem label="能力集合" path="capabilityIds">
-            <NTreeSelect
-              v-model:value="selectedCapabilityKeys"
-              multiple
-              cascade
-              checkable
-              clearable
-              check-strategy="child"
-              :options="capabilityTree"
-              placeholder="请选择能力集合"
-              @update:value="value => syncCapabilitySelection((value || []) as string[])"
-            />
+            <div class="max-h-320px w-full overflow-y-auto border border-[#e5e7eb] rounded-8px px-12px py-8px">
+              <NTree
+                block-line
+                cascade
+                checkable
+                default-expand-all
+                key-field="key"
+                label-field="label"
+                children-field="children"
+                :data="capabilityTree"
+                :checked-keys="selectedCapabilityKeys"
+                :render-label="renderCapabilityLabel"
+                @update:checked-keys="keys => syncCapabilitySelection((keys || []) as string[])"
+              />
+            </div>
           </NFormItem>
           <NFormItem label="描述" path="description">
             <NInput v-model:value="model.description" type="textarea" placeholder="请输入描述" />

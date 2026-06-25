@@ -1,8 +1,10 @@
 <script setup lang="tsx">
+import { computed } from 'vue';
 import { NButton, NPopconfirm, NTag } from 'naive-ui';
 import { enableStatusRecord } from '@/constants/business';
 import { deleteRole, fetchGetRoleList } from '@/service/api';
 import { useAppStore } from '@/store/modules/app';
+import { useAuthStore } from '@/store/modules/auth';
 import { useTable, useTableOperate } from '@/hooks/common/table';
 import { $t } from '@/locales';
 import RoleOperateDrawer from './modules/role-operate-drawer.vue';
@@ -13,6 +15,8 @@ defineOptions({
 });
 
 const appStore = useAppStore();
+const authStore = useAuthStore();
+const isSystemAdmin = computed(() => authStore.userInfo.actorType === 'system_admin');
 const roleStatusTagMap = {
   ENABLED: 'success',
   DISABLED: 'warning'
@@ -30,62 +34,80 @@ const {
   resetSearchParams
 } = useTable({
   apiFn: fetchGetRoleList,
-  apiParams: { current: 1, size: 10, status: null, name: null, code: null },
-  columns: () => [
-    { type: 'selection', align: 'center', width: 48 },
-    { key: 'index', title: $t('common.index'), width: 64, align: 'center' },
-    { key: 'name', title: $t('page.manage.role.roleName'), align: 'center', minWidth: 140 },
-    { key: 'code', title: $t('page.manage.role.roleCode'), align: 'center', minWidth: 160 },
-    { key: 'templateName', title: '模板', align: 'center', minWidth: 140, render: row => row.templateName || '-' },
-    {
-      key: 'capabilityCount',
-      title: '能力数',
-      align: 'center',
-      width: 100,
-      render: row => <NTag type="info">{row.capabilityCount || 0}</NTag>
-    },
-    {
-      key: 'scopePolicyCount',
-      title: 'Scope数',
-      align: 'center',
-      width: 100,
-      render: row => <NTag type="warning">{row.scopePolicyCount || 0}</NTag>
-    },
-    { key: 'description', title: $t('page.manage.role.roleDesc'), minWidth: 180 },
-    {
-      key: 'status',
-      title: $t('page.manage.role.roleStatus'),
-      align: 'center',
-      width: 100,
-      render: row =>
-        row.status === null ? null : (
-          <NTag type={roleStatusTagMap[row.status]}>{$t(enableStatusRecord[row.status])}</NTag>
+  apiParams: { current: 1, size: 10, status: null, name: null, code: null, tenantScope: 'all', tenantId: null },
+  columns: () => {
+    const columnList = [
+      { type: 'selection', align: 'center', width: 48 },
+      { key: 'index', title: $t('common.index'), width: 64, align: 'center' },
+      { key: 'name', title: $t('page.manage.role.roleName'), align: 'center', minWidth: 140 },
+      { key: 'code', title: $t('page.manage.role.roleCode'), align: 'center', minWidth: 160 },
+      {
+        key: 'templateName',
+        title: '模板',
+        align: 'center',
+        minWidth: 140,
+        render: (row: Api.SystemManage.Role) => row.templateName || '-'
+      },
+      {
+        key: 'capabilityCount',
+        title: '能力数',
+        align: 'center',
+        width: 100,
+        render: (row: Api.SystemManage.Role) => <NTag type="info">{row.capabilityCount || 0}</NTag>
+      },
+      {
+        key: 'scopePolicyCount',
+        title: '数据范围数',
+        align: 'center',
+        width: 100,
+        render: (row: Api.SystemManage.Role) => <NTag type="warning">{row.scopePolicyCount || 0}</NTag>
+      },
+      { key: 'description', title: $t('page.manage.role.roleDesc'), minWidth: 180 },
+      {
+        key: 'status',
+        title: $t('page.manage.role.roleStatus'),
+        align: 'center',
+        width: 100,
+        render: (row: Api.SystemManage.Role) =>
+          row.status === null ? null : (
+            <NTag type={roleStatusTagMap[row.status]}>{$t(enableStatusRecord[row.status])}</NTag>
+          )
+      },
+      {
+        key: 'operate',
+        title: $t('common.operate'),
+        align: 'center',
+        minWidth: 140,
+        render: (row: Api.SystemManage.Role) => (
+          <div class="flex-center gap-8px">
+            <NButton type="primary" ghost size="small" onClick={() => edit(row.id)}>
+              {$t('common.edit')}
+            </NButton>
+            <NPopconfirm onPositiveClick={() => handleDelete(row.id)}>
+              {{
+                default: () => $t('common.confirmDelete'),
+                trigger: () => (
+                  <NButton type="error" ghost size="small" disabled={row.builtIn}>
+                    {$t('common.delete')}
+                  </NButton>
+                )
+              }}
+            </NPopconfirm>
+          </div>
         )
-    },
-    {
-      key: 'operate',
-      title: $t('common.operate'),
-      align: 'center',
-      minWidth: 140,
-      render: row => (
-        <div class="flex-center gap-8px">
-          <NButton type="primary" ghost size="small" onClick={() => edit(row.id)}>
-            {$t('common.edit')}
-          </NButton>
-          <NPopconfirm onPositiveClick={() => handleDelete(row.id)}>
-            {{
-              default: () => $t('common.confirmDelete'),
-              trigger: () => (
-                <NButton type="error" ghost size="small" disabled={row.builtIn}>
-                  {$t('common.delete')}
-                </NButton>
-              )
-            }}
-          </NPopconfirm>
-        </div>
-      )
+      }
+    ];
+    if (isSystemAdmin.value) {
+      columnList.splice(4, 0, {
+        key: 'tenantId',
+        title: '所属租户',
+        align: 'center',
+        minWidth: 140,
+        render: (row: Api.SystemManage.Role) => <span>{row.tenantId ? row.tenantName || row.tenantId : '平台'}</span>
+      });
     }
-  ]
+    return columnList as any;
+  }
 });
 
 const { drawerVisible, operateType, editingData, handleAdd, handleEdit, checkedRowKeys, onBatchDeleted, onDeleted } =
@@ -126,7 +148,7 @@ function edit(id: string) {
         :data="data"
         size="small"
         :flex-height="!appStore.isMobile"
-        :scroll-x="980"
+        :scroll-x="1120"
         :loading="loading"
         remote
         :row-key="row => row.id"

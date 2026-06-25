@@ -81,7 +81,7 @@ export function updateCapability(req: CapabilityModel) {
 export type RoleModel = Partial<Pick<Api.SystemManage.Role, 'id'>> &
   Pick<
     Api.SystemManage.Role,
-    'name' | 'code' | 'description' | 'status' | 'templateId' | 'capabilityIds' | 'scopePolicies'
+    'name' | 'code' | 'description' | 'status' | 'tenantId' | 'templateId' | 'capabilityIds' | 'scopePolicies'
   >;
 
 export function createRole(req: RoleModel) {
@@ -158,7 +158,7 @@ export function deleteRoute(id: number) {
 export type UserModel = Partial<Pick<Api.SystemManage.User, 'id'>> &
   Pick<
     Api.SystemManage.User,
-    'username' | 'password' | 'avatar' | 'nickName' | 'phoneNumber' | 'email' | 'status' | 'roleIds'
+    'username' | 'password' | 'tenantId' | 'avatar' | 'nickName' | 'phoneNumber' | 'email' | 'status' | 'roleIds'
   >;
 
 export function createUser(req: UserModel) {

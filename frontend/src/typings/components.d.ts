@@ -38,7 +38,6 @@ declare module 'vue' {
     LangSwitch: typeof import('./../components/common/lang-switch.vue')['default']
     LookForward: typeof import('./../components/custom/look-forward.vue')['default']
     MenuToggler: typeof import('./../components/common/menu-toggler.vue')['default']
-    NAlert: typeof import('naive-ui')['NAlert']
     NAvatar: typeof import('naive-ui')['NAvatar']
     NBreadcrumb: typeof import('naive-ui')['NBreadcrumb']
     NBreadcrumbItem: typeof import('naive-ui')['NBreadcrumbItem']
