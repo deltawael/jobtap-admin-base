@@ -16,3 +16,6 @@
 ## 当前说明
 
 - 新增底座使用手册时，默认放入 `docs/guide/` 并在本页补充入口。
+- 当前底座“已有功能”总览见 `guide/base-project-guide.md`。
+- 初始化后应直接验收的菜单、日志、个人中心和改密能力见 `guide/environment-bootstrap.md`。
+- `authz-module-onboarding.md` 只负责模块能力接入规范，不承担当前功能清单职责。
