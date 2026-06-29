@@ -71,7 +71,7 @@ services:
     ports:
       - "25432:5432"
     volumes:
-      - jobtap-admin-base-postgres_data:/usr/share/docker/postgresql
+      - jobtap-admin-base-postgres_data:/var/lib/postgresql/data
     networks:
       - jobtap-admin-base
     healthcheck:
