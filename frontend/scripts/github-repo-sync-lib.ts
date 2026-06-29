@@ -116,6 +116,12 @@ interface GitHubContext {
   fetchImpl: typeof fetch;
 }
 
+interface SyncItemContext {
+  type: 'variable' | 'secret';
+  name: string;
+  action: 'create' | 'update' | 'skip';
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -559,10 +565,40 @@ function formatGitHubError(error: GitHubApiError, repository: string) {
   }
 
   if (error.status === 422) {
-    return `${prefix} GitHub rejected the payload. Check repository variable or secret names for GitHub validation rules.`;
+    const details = error.responseMessage
+      ? ` GitHub response: ${error.responseMessage}`
+      : ' Check repository variable or secret names for GitHub validation rules.';
+    return `${prefix} GitHub rejected the payload.${details}`;
   }
 
   return `${prefix} ${error.message}`;
+}
+
+function formatSyncItemLabel(item: SyncItemContext) {
+  return `${item.type} "${item.name}"`;
+}
+
+function wrapSyncItemError(repository: string, item: SyncItemContext, error: unknown) {
+  if (!(error instanceof GitHubApiError)) {
+    return error;
+  }
+
+  return new RepositorySyncError(
+    `Failed to ${item.action} ${formatSyncItemLabel(item)}. ${formatGitHubError(error, repository)}`,
+    { cause: error }
+  );
+}
+
+function assertVariableChangesHaveValues(variableChanges: VariablePlanItem[]) {
+  const emptyVariables = variableChanges.filter(variable => variable.value === '').map(variable => variable.name);
+
+  if (emptyVariables.length === 0) {
+    return;
+  }
+
+  throw new RepositorySyncError(
+    `GitHub repository variables cannot be empty strings. Remove these keys, give them a non-empty placeholder, or pre-create them manually if you need to keep an empty value: ${emptyVariables.join(', ')}.`
+  );
 }
 
 export async function syncRepositoryConfig(options: SyncRunOptions = {}) {
@@ -611,19 +647,34 @@ export async function syncRepositoryConfig(options: SyncRunOptions = {}) {
     }
 
     const variableChanges = plan.variables.filter(variable => variable.action !== 'skip');
+    assertVariableChangesHaveValues(variableChanges);
 
     await Promise.all(
-      variableChanges.map(variable =>
-        variable.action === 'create'
-          ? createRepositoryVariable(context, variable)
-          : updateRepositoryVariable(context, variable)
-      )
+      variableChanges.map(async variable => {
+        try {
+          if (variable.action === 'create') {
+            await createRepositoryVariable(context, variable);
+          } else {
+            await updateRepositoryVariable(context, variable);
+          }
+        } catch (error) {
+          throw wrapSyncItemError(repository.fullName, variable, error);
+        }
+      })
     );
 
     if (plan.secrets.length > 0) {
       const publicKey = await getRepositoryPublicKey(context);
 
-      await Promise.all(plan.secrets.map(secret => upsertRepositorySecret(context, secret, publicKey)));
+      await Promise.all(
+        plan.secrets.map(async secret => {
+          try {
+            await upsertRepositorySecret(context, secret, publicKey);
+          } catch (error) {
+            throw wrapSyncItemError(repository.fullName, secret, error);
+          }
+        })
+      );
     }
 
     logger.log(

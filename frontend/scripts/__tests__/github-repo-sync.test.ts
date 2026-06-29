@@ -367,3 +367,127 @@ secrets:
     await rm(tempDir, { recursive: true, force: true });
   }
 });
+
+test('syncRepositoryConfig rejects empty variable changes before writing', async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), 'github-sync-empty-variable-'));
+  const configPath = path.join(tempDir, 'repo.yaml');
+  const requests: Array<{ method: string; url: string }> = [];
+
+  await writeFile(
+    configPath,
+    `
+repository: octo-org/octo-repo
+variables:
+  EMPTY_VALUE: ""
+`
+  );
+
+  const fetchImpl: typeof fetch = async (input, init) => {
+    const url = String(input);
+    const method = init?.method ?? 'GET';
+    requests.push({ method, url });
+
+    if (url.includes('/actions/variables?')) {
+      return new Response(
+        JSON.stringify({
+          total_count: 0,
+          variables: []
+        }),
+        { status: 200 }
+      );
+    }
+
+    throw new Error(`Unexpected request in empty variable test: ${method} ${url}`);
+  };
+
+  try {
+    await assert.rejects(
+      () =>
+        syncRepositoryConfig({
+          configPath,
+          token: 'test-token',
+          fetchImpl,
+          logger: {
+            log() {},
+            warn() {},
+            error() {}
+          }
+        }),
+      /GitHub repository variables cannot be empty strings.*EMPTY_VALUE/
+    );
+    assert.equal(
+      requests.some(request => request.method !== 'GET'),
+      false
+    );
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('syncRepositoryConfig surfaces the failing secret name and GitHub response message', async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), 'github-sync-secret-error-'));
+  const configPath = path.join(tempDir, 'repo.yaml');
+
+  await writeFile(
+    configPath,
+    `
+repository: octo-org/octo-repo
+secrets:
+  BROKEN_SECRET: top-secret
+`
+  );
+
+  await sodium.ready;
+  const keyPair = sodium.crypto_box_keypair();
+  const publicKey = sodium.to_base64(keyPair.publicKey, sodium.base64_variants.ORIGINAL);
+
+  const fetchImpl: typeof fetch = async (input, init) => {
+    const url = String(input);
+    const method = init?.method ?? 'GET';
+
+    if (method === 'GET' && url.includes('/actions/secrets?')) {
+      return new Response(
+        JSON.stringify({
+          total_count: 0,
+          secrets: []
+        }),
+        { status: 200 }
+      );
+    }
+
+    if (method === 'GET' && url.endsWith('/actions/secrets/public-key')) {
+      return new Response(
+        JSON.stringify({
+          key: publicKey,
+          key_id: 'key-id-1'
+        }),
+        { status: 200 }
+      );
+    }
+
+    if (method === 'PUT' && url.includes('/actions/secrets/BROKEN_SECRET')) {
+      return new Response(JSON.stringify({ message: 'Invalid value' }), { status: 422 });
+    }
+
+    throw new Error(`Unexpected request in secret error test: ${method} ${url}`);
+  };
+
+  try {
+    await assert.rejects(
+      () =>
+        syncRepositoryConfig({
+          configPath,
+          token: 'test-token',
+          fetchImpl,
+          logger: {
+            log() {},
+            warn() {},
+            error() {}
+          }
+        }),
+      /Failed to create secret "BROKEN_SECRET".*GitHub response: Invalid value/
+    );
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
+});
