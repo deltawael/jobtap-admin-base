@@ -159,6 +159,6 @@
     ]
   },
   "prisma": {
-    "seed": "ts-node -r tsconfig-paths/register prisma/seeds"
+    "seed": "./node_modules/.bin/ts-node -r tsconfig-paths/register prisma/seeds"
   }
 }

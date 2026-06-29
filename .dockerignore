@@ -1,0 +1,9 @@
+.git
+.agents
+.vscode
+docs
+frontend/node_modules
+frontend/dist
+backend/node_modules
+backend/dist
+backend/logs

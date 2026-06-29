@@ -1,8 +1,11 @@
 import cluster from 'node:cluster';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 // import { constants } from 'zlib';
 
 import fastifyCompress from '@fastify/compress';
 import fastifyCsrf from '@fastify/csrf-protection';
+import fastifyStatic from '@fastify/static';
 import {
   HttpStatus,
   Logger,
@@ -28,6 +31,11 @@ import { AppModule } from './app.module';
 interface ValidationErrors {
   [key: string]: string[] | ValidationErrors;
 }
+
+const GLOBAL_PREFIX = 'v1';
+const API_PREFIX = `/${GLOBAL_PREFIX}`;
+const DOCS_PREFIX = '/api-docs';
+const FRONTEND_DIST_DIR = resolve(__dirname, '../../../../public');
 
 const validationPipeOptions: ValidationPipeOptions = {
   transform: true,
@@ -66,6 +74,55 @@ function formatErrors(
   }, {} as ValidationErrors);
 }
 
+function hasFileExtension(pathname: string): boolean {
+  return /\/[^/]+\.[^/]+$/.test(pathname);
+}
+
+function isApiLikePath(pathname: string): boolean {
+  return pathname === API_PREFIX || pathname.startsWith(`${API_PREFIX}/`);
+}
+
+function isDocsLikePath(pathname: string): boolean {
+  return pathname === DOCS_PREFIX || pathname.startsWith(`${DOCS_PREFIX}/`);
+}
+
+function isSpaFallbackCandidate(pathname: string): boolean {
+  return !isApiLikePath(pathname) && !isDocsLikePath(pathname) && !hasFileExtension(pathname);
+}
+
+async function registerFrontendAssets(app: NestFastifyApplication): Promise<void> {
+  if (isDevEnvironment || !existsSync(FRONTEND_DIST_DIR)) {
+    return;
+  }
+
+  const fastify = app.getHttpAdapter().getInstance();
+
+  await fastify.register(fastifyStatic as any, {
+    root: FRONTEND_DIST_DIR,
+    prefix: '/',
+    wildcard: false,
+  });
+
+  fastify.route({
+    method: ['GET', 'HEAD'],
+    url: '/*',
+    handler: (request, reply) => {
+      const url = new URL(request.raw.url ?? request.url, 'http://localhost');
+      const pathname = url.pathname;
+      const acceptsHtml = `${request.headers.accept ?? ''}`.includes('text/html');
+
+      if (
+        acceptsHtml &&
+        isSpaFallbackCandidate(pathname)
+      ) {
+        return (reply.type('text/html; charset=utf-8') as any).sendFile('index.html');
+      }
+
+      return reply.callNotFound();
+    },
+  });
+}
+
 async function bootstrap() {
   await RedisUtility.client();
 
@@ -85,7 +142,6 @@ async function bootstrap() {
     app.enableCors(corsConfig.corsOptions);
   }
 
-  const GLOBAL_PREFIX = 'v1';
   app.setGlobalPrefix(GLOBAL_PREFIX);
 
   app.useGlobalPipes(new ValidationPipe(validationPipeOptions));
@@ -97,6 +153,7 @@ async function bootstrap() {
   // await app.register(fastifyCompress, { brotliOptions: { params: { [constants.BROTLI_PARAM_QUALITY]: 4 } } });
   // TODO
   await app.register(fastifyCsrf as any);
+  await registerFrontendAssets(app);
 
   // 注册 Helmet 安全中间件
   // @description 提供基本的安全防护，包括 XSS、CSP、HSTS 等

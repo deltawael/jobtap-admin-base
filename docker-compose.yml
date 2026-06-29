@@ -2,37 +2,27 @@ services:
   # 数据库初始化统一由 Prisma migration + seed 负责
   db-init:
     build:
-      context: backend/
+      context: .
+      dockerfile: backend/Dockerfile
+      target: backend-build
     environment:
       DATABASE_URL: "postgresql://jobtap:jobtap@123.@postgres:5432/jobtap-admin-base-backend?schema=public"
+      DIRECT_DATABASE_URL: "postgresql://jobtap:jobtap@123.@postgres:5432/jobtap-admin-base-backend?schema=public"
     depends_on:
       postgres:
         condition: service_healthy
     command: >
       sh -c "
-        pnpm exec prisma migrate deploy --schema prisma/schema.prisma &&
-        pnpm exec prisma db seed
+        ./node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma &&
+        ./node_modules/.bin/prisma db seed
       "
-    networks:
-      - jobtap-admin-base
-
-  frontend:
-    build:
-      context: frontend/
-    # image: jobtap-admin-base-frontend:1.2.7
-    environment:
-      TZ: Asia/Shanghai
-    depends_on:
-      backend:
-        condition: service_healthy
-    ports:
-      - "9527:80"
     networks:
       - jobtap-admin-base
 
   backend:
     build:
-      context: backend/
+      context: .
+      dockerfile: backend/Dockerfile
     # image: jobtap-admin-base-backend:0.0.1
     environment:
       TZ: Asia/Shanghai
@@ -42,6 +32,7 @@ services:
       DOC_SWAGGER_ENABLE: "true"
       DOC_SWAGGER_PATH: "api-docs"
       DATABASE_URL: "postgresql://jobtap:jobtap@123.@postgres:5432/jobtap-admin-base-backend?schema=public"
+      DIRECT_DATABASE_URL: "postgresql://jobtap:jobtap@123.@postgres:5432/jobtap-admin-base-backend?schema=public"
       REDIS_HOST: "redis"
       REDIS_PORT: 6379
       REDIS_PASSWORD: "123456"

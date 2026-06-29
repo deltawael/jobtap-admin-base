@@ -13,28 +13,41 @@ ARG PNPM_VERSION=9.1.2
 # Use node image for base image for all stages.
 FROM node:${NODE_VERSION}-alpine AS base
 
-# Set working directory for all build stages.
-WORKDIR /usr/src/app/jobtap-admin-base/backend
-
 # 生产部署可注释
 RUN apk --no-cache add curl
+
 # Install pnpm.
 RUN --mount=type=cache,target=/root/.npm \
     npm install -g pnpm@${PNPM_VERSION} pm2
 
 ################################################################################
-# Create a stage for installing production dependecies.
-FROM base AS deps
+# Build frontend assets.
+FROM base AS frontend-build
+
+WORKDIR /usr/src/app/jobtap-admin-base/frontend
+
+COPY frontend ./
+
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store/jobtap-admin-base/frontend \
+    pnpm install --frozen-lockfile
+
+RUN pnpm run build
+
+################################################################################
+# Create a stage for installing production dependencies.
+FROM base AS backend-deps
+
+WORKDIR /usr/src/app/jobtap-admin-base/backend
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.local/share/pnpm/store to speed up subsequent builds.
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY backend/package.json backend/pnpm-lock.yaml backend/pnpm-workspace.yaml backend/.npmrc ./
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store/jobtap-admin-base/backend \
     pnpm install --prod --frozen-lockfile
 
 ################################################################################
 # Create a stage for building the application.
-FROM deps AS build
+FROM backend-deps AS backend-build
 
 # Download additional development dependencies before building, as some projects require
 # "devDependencies" to be installed to build. If you don't need this, remove this step.
@@ -42,7 +55,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store/jobtap-admin-base/ba
     pnpm install --frozen-lockfile
 
 # Copy the rest of the source files into the image.
-COPY . .
+COPY backend ./
 
 # Run the build script.
 RUN pnpm prisma:generate && pnpm build
@@ -52,25 +65,28 @@ RUN pnpm prisma:generate && pnpm build
 # where the necessary files are copied from the build stage.
 FROM base AS final
 
+# Set working directory for the runtime image.
+WORKDIR /usr/src/app/jobtap-admin-base/backend
+
 # Use production node environment by default.
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 # Create log directory according to ecosystem.config.js specifications.
 USER root
 RUN mkdir -p /usr/src/app/jobtap-admin-base/backend/logs && \
-    chown -R node:node /usr/src/app/jobtap-admin-base/backend/logs
+    chown -R node:node /usr/src/app/jobtap-admin-base/backend
 
 # Run the application as a non-root user.
 USER node
 
-# Copy package.json so that package manager commands can be used.
-COPY package.json .
-
 # Copy the production dependencies from the deps stage and also
 # the built application from the build stage into the image.
-COPY --from=build /usr/src/app/jobtap-admin-base/backend/node_modules ./node_modules
-COPY --from=build /usr/src/app/jobtap-admin-base/backend/dist ./dist
-COPY ./ecosystem.config.js ./ecosystem.config.js
+COPY --chown=node:node --from=backend-build /usr/src/app/jobtap-admin-base/backend/package.json ./
+COPY --chown=node:node --from=backend-build /usr/src/app/jobtap-admin-base/backend/node_modules ./node_modules
+COPY --chown=node:node --from=backend-build /usr/src/app/jobtap-admin-base/backend/dist ./dist
+COPY --chown=node:node --from=backend-build /usr/src/app/jobtap-admin-base/backend/prisma ./prisma
+COPY --chown=node:node --from=backend-build /usr/src/app/jobtap-admin-base/backend/ecosystem.config.js ./ecosystem.config.js
+COPY --chown=node:node --from=frontend-build /usr/src/app/jobtap-admin-base/frontend/dist ./public
 
 
 # Expose the port that the application listens on.
