@@ -81,10 +81,13 @@ USER node
 
 # Copy the production dependencies from the deps stage and also
 # the built application from the build stage into the image.
+# Keep the minimal seed runtime dependencies so db-init can reuse this image.
 COPY --chown=node:node --from=backend-build /usr/src/app/jobtap-admin-base/backend/package.json ./
 COPY --chown=node:node --from=backend-build /usr/src/app/jobtap-admin-base/backend/node_modules ./node_modules
 COPY --chown=node:node --from=backend-build /usr/src/app/jobtap-admin-base/backend/dist ./dist
 COPY --chown=node:node --from=backend-build /usr/src/app/jobtap-admin-base/backend/prisma ./prisma
+COPY --chown=node:node --from=backend-build /usr/src/app/jobtap-admin-base/backend/tsconfig.json ./tsconfig.json
+COPY --chown=node:node --from=backend-build /usr/src/app/jobtap-admin-base/backend/libs ./libs
 COPY --chown=node:node --from=backend-build /usr/src/app/jobtap-admin-base/backend/ecosystem.config.js ./ecosystem.config.js
 COPY --chown=node:node --from=frontend-build /usr/src/app/jobtap-admin-base/frontend/dist ./public
 
