@@ -1,0 +1,11 @@
+# Copy this file to default.local.yaml, prod.local.yaml, or another *.local.yaml file in this directory.
+repository: your-org/your-repository
+
+variables:
+  APP_ENV: production
+  FEATURE_FLAG: enabled
+  RETRY_COUNT: 3
+
+secrets:
+  DEPLOY_WEBHOOK_SECRET: replace-with-a-real-secret
+  SERVICE_TOKEN: replace-with-a-real-secret

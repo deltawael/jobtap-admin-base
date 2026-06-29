@@ -82,6 +82,8 @@ web_modules/
 .env.test.local
 .env.production.local
 .env.local
+github-repo-config/*.local.yaml
+github-repo-config/token.local
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
