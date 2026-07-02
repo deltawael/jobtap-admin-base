@@ -78,6 +78,8 @@ pnpm exec prisma migrate deploy --schema prisma/schema.prisma
 pnpm exec prisma db seed
 ```
 
+> 注意：`pnpm exec prisma db seed` 不只是新环境初始化命令，生产升级流程中也可能重复执行。新增或修改 seed 时，必须先判断其写入策略，默认不得覆盖线上人工维护数据；详细规则见 [环境初始化与基线](./docs/guide/environment-bootstrap.md) 中的 “Seed 升级安全规则”。
+
 ### 3. 启动后端
 
 ```bash
@@ -145,6 +147,6 @@ pnpm github:sync -- --config ../github-repo-config/staging.local.yaml
 
 ## 说明
 
-- 数据库初始化统一走 Prisma migration + seed，不再保留其他基线路径。
+- 数据库初始化统一走 Prisma migration + seed，不再保留其他基线路径；其中 `db seed` 需要按“生产升级可安全重复执行”的语义设计。
 - 普通结构变更请在当前基线之上继续追加 Prisma migration，不要重复重建全量 baseline。
 - 初始化账号的默认密码明文不在文档中固化；种子使用统一初始密码哈希，部署前应替换种子中的默认哈希，或初始化后立即重置管理员密码。
