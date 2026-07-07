@@ -35,6 +35,7 @@ declare namespace Api {
     interface UserInfo {
       userId: string;
       userName: string;
+      nickName: string;
       tenantId: string | null;
       actorType: 'system_admin' | 'tenant_admin' | 'tenant_user';
       roles: string[];

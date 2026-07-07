@@ -87,7 +87,16 @@ export class AuthenticationController {
   @Get('getUserInfo')
   async getProfile(@Request() req: any): Promise<ApiRes<any>> {
     const user = req.user as IAuthentication;
-    const userRoleMappings = await this.prisma.sysUserRole.findMany({ where: { userId: user.userId } });
+    const [currentUser, userRoleMappings] = await Promise.all([
+      this.prisma.sysUser.findUnique({
+        where: { id: user.userId },
+        select: {
+          username: true,
+          nickName: true,
+        },
+      }),
+      this.prisma.sysUserRole.findMany({ where: { userId: user.userId } }),
+    ]);
     const roleIds = userRoleMappings.map(item => item.roleId);
     const roles = roleIds.length ? await this.prisma.sysRole.findMany({ where: { id: { in: roleIds } } }) : [];
     const templateIds = roles.map(item => item.templateId).filter(Boolean) as string[];
@@ -130,6 +139,7 @@ export class AuthenticationController {
     return ApiRes.success({
       userId: user.userId,
       userName: user.username,
+      nickName: currentUser?.nickName || currentUser?.username || user.username,
       tenantId: user.tenantId,
       actorType: user.actorType,
       roles: roles.map(item => item.code),

@@ -136,6 +136,7 @@ async function handleSaveProfile() {
   if (data) {
     profile.value = data;
     syncProfileForm(data);
+    authStore.userInfo.nickName = data.nickName;
   }
   await loadProfile();
 }

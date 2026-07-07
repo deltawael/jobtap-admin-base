@@ -23,6 +23,7 @@ export const useAuthStore = defineStore(SetupStoreId.Auth, () => {
   const userInfo: Api.Auth.UserInfo = reactive({
     userId: '',
     userName: '',
+    nickName: '',
     tenantId: null,
     actorType: 'tenant_user',
     roles: [],
@@ -39,6 +40,9 @@ export const useAuthStore = defineStore(SetupStoreId.Auth, () => {
 
   /** Is login */
   const isLogin = computed(() => Boolean(token.value));
+
+  /** Display name for logged-in UI */
+  const displayName = computed(() => userInfo.nickName || userInfo.userName);
 
   /** Reset auth store */
   async function resetStore() {
@@ -76,7 +80,7 @@ export const useAuthStore = defineStore(SetupStoreId.Auth, () => {
 
         window.$notification?.success({
           title: $t('page.login.common.loginSuccess'),
-          content: $t('page.login.common.welcomeBack', { userName: userInfo.userName }),
+          content: $t('page.login.common.welcomeBack', { userName: displayName.value }),
           duration: 4500
         });
       }
@@ -132,6 +136,7 @@ export const useAuthStore = defineStore(SetupStoreId.Auth, () => {
   return {
     token,
     userInfo,
+    displayName,
     isStaticSuper,
     isLogin,
     loginLoading,
