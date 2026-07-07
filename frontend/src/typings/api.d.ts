@@ -64,26 +64,59 @@ declare namespace Api {
 
   namespace SystemManage {
     type CommonSearchParams = Pick<Common.PaginatingCommonParams, 'current' | 'size'>;
-    type ScopeType = 'all' | 'self' | 'region' | 'department' | 'custom';
-    type PolicyEffect = 'allow' | 'deny';
+    type ScopeStrategyMode = 'all' | 'self' | 'relation' | 'assignment';
     type DelegationStatus = 'active' | 'expired' | 'revoked';
     type CapabilityKind = 'action' | 'view';
-    type ScopePolicy = {
-      id?: string;
-      capabilityId: string;
-      scopeType: ScopeType;
-      scopeValue?: string | null;
-      effect?: PolicyEffect;
-      description?: string | null;
+    type ScopeDimensionRecord = {
+      id: string;
+      label: string;
+      code?: string | null;
     };
-    type ScopeOverride = {
-      id?: string;
+    type CapabilityScopeTarget = {
+      id: string;
       capabilityId: string;
-      scopeType: ScopeType;
-      scopeValue?: string | null;
-      effect?: PolicyEffect;
-      startAt?: string | null;
-      endAt?: string | null;
+      resourceEntityCode: string;
+      dimensionEntityCode?: string | null;
+      dimensionEntityName?: string | null;
+      supportsSelf: boolean;
+    };
+    type RoleScopeStrategy = {
+      id?: string;
+      roleId?: string;
+      tenantId?: string | null;
+      capabilityId: string;
+      capabilityCode?: string | null;
+      capabilityName?: string | null;
+      strategyMode: ScopeStrategyMode;
+      dimensionEntityCode?: string | null;
+      dimensionEntityName?: string | null;
+    };
+    type ScopeAssignment = {
+      capabilityId: string;
+      capabilityCode?: string | null;
+      capabilityName?: string | null;
+      dimensionEntityCode: string;
+      dimensionEntityName?: string | null;
+      entityIds: string[];
+      entities?: ScopeDimensionRecord[];
+    };
+    type ScopeCapability = {
+      capabilityId: string;
+      capabilityCode?: string | null;
+      capabilityName?: string | null;
+      dimensionEntityCode: string;
+      dimensionEntityName?: string | null;
+    };
+    type RelationBinding = {
+      dimensionEntityCode: string;
+      dimensionEntityName?: string | null;
+      entityIds: string[];
+    };
+    type ResolvedRelation = {
+      dimensionEntityCode: string;
+      dimensionEntityName?: string | null;
+      entityIds: string[];
+      entities: ScopeDimensionRecord[];
     };
     type Delegation = {
       id: string;
@@ -95,8 +128,12 @@ declare namespace Api {
       fromUserId: string;
       toUserId: string;
       capabilityId: string;
-      scopeType: ScopeType;
-      scopeValue?: string | null;
+      capabilityCode?: string | null;
+      capabilityName?: string | null;
+      dimensionEntityCode?: string | null;
+      dimensionEntityName?: string | null;
+      entityId?: string | null;
+      entityLabel?: ScopeDimensionRecord | null;
       status: DelegationStatus;
       startAt: string;
       endAt: string;
@@ -114,8 +151,7 @@ declare namespace Api {
       templateCode: string | null;
       capabilityIds: string[];
       capabilityCount: number;
-      scopePolicies: ScopePolicy[];
-      scopePolicyCount: number;
+      scopeStrategyCount: number;
       builtIn: boolean;
     }>;
     type RoleTemplate = Common.CommonRecord<{
@@ -134,16 +170,20 @@ declare namespace Api {
       kind: CapabilityKind;
       builtIn: boolean;
       description: string | null;
+      scopeTargets?: CapabilityScopeTarget[];
     }>;
     type UserAuthProfile = {
+      userId: string;
       tenantId: string | null;
       roles: Role[];
       capabilities: Capability[];
-      scopes: ScopeOverride[];
+      relationBindings: RelationBinding[];
+      resolvedRelations: ResolvedRelation[];
+      scopeAssignments: ScopeAssignment[];
+      scopeCapabilities: ScopeCapability[];
       delegations: Delegation[];
       linkedStaffId: string | null;
       roleIds: string[];
-      scopeOverrides: ScopeOverride[];
     };
     type RoleSearchParams = CommonType.RecordNullable<
       Pick<Api.SystemManage.Role, 'name' | 'code' | 'status' | 'tenantId'> &

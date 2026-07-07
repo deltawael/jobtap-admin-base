@@ -159,6 +159,13 @@ enum PolicyEffect {
   deny
 }
 
+enum ScopeStrategyMode {
+  all
+  self
+  relation
+  assignment
+}
+
 model SysUserRole {
   userId String @map("user_id")
   roleId String @map("role_id")
@@ -244,6 +251,8 @@ model Delegation {
   capabilityId String           @map("capability_id")
   scopeType    ScopeType        @map("scope_type")
   scopeValue   String?          @map("scope_value")
+  dimensionEntityCode String?   @map("dimension_entity_code")
+  entityId     String?          @map("entity_id")
   status       DelegationStatus @default(active)
   startAt      DateTime         @map("start_at")
   endAt        DateTime         @map("end_at")
@@ -253,6 +262,7 @@ model Delegation {
   updatedBy    String?          @map("updated_by")
 
   @@index([tenantId, toUserId, capabilityId])
+  @@index([tenantId, toUserId, capabilityId, dimensionEntityCode])
   @@map("delegations")
 }
 
@@ -268,6 +278,122 @@ model UserStaffBinding {
 
   @@index([tenantId, staffId])
   @@map("user_staff_bindings")
+}
+
+model ScopeDimensionEntity {
+  code        String    @id
+  name        String
+  description String?
+  builtIn     Boolean   @default(true) @map("built_in")
+  status      Status
+  createdAt   DateTime  @default(now()) @map("created_at")
+  createdBy   String    @map("created_by")
+  updatedAt   DateTime? @updatedAt @map("updated_at")
+  updatedBy   String?   @map("updated_by")
+
+  @@map("scope_dimension_entities")
+}
+
+model ScopeSubjectResolver {
+  id                  String    @id @default(cuid())
+  resolverCode        String    @unique @map("resolver_code")
+  subjectEntityCode   String    @map("subject_entity_code")
+  dimensionEntityCode String    @map("dimension_entity_code")
+  description         String?
+  builtIn             Boolean   @default(true) @map("built_in")
+  status              Status
+  createdAt           DateTime  @default(now()) @map("created_at")
+  createdBy           String    @map("created_by")
+  updatedAt           DateTime? @updatedAt @map("updated_at")
+  updatedBy           String?   @map("updated_by")
+
+  @@index([subjectEntityCode, dimensionEntityCode])
+  @@map("scope_subject_resolvers")
+}
+
+model ScopeResourceResolver {
+  id                  String    @id @default(cuid())
+  resolverCode        String    @unique @map("resolver_code")
+  resourceEntityCode  String    @map("resource_entity_code")
+  dimensionEntityCode String    @map("dimension_entity_code")
+  description         String?
+  builtIn             Boolean   @default(true) @map("built_in")
+  status              Status
+  createdAt           DateTime  @default(now()) @map("created_at")
+  createdBy           String    @map("created_by")
+  updatedAt           DateTime? @updatedAt @map("updated_at")
+  updatedBy           String?   @map("updated_by")
+
+  @@index([resourceEntityCode, dimensionEntityCode])
+  @@map("scope_resource_resolvers")
+}
+
+model CapabilityScopeTarget {
+  id                  String    @id @default(cuid())
+  capabilityId        String    @map("capability_id")
+  resourceEntityCode  String    @map("resource_entity_code")
+  dimensionEntityCode String?   @map("dimension_entity_code")
+  supportsSelf        Boolean   @default(false) @map("supports_self")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  createdBy           String    @map("created_by")
+  updatedAt           DateTime? @updatedAt @map("updated_at")
+  updatedBy           String?   @map("updated_by")
+
+  @@index([capabilityId, resourceEntityCode])
+  @@index([dimensionEntityCode])
+  @@unique([capabilityId, resourceEntityCode, dimensionEntityCode])
+  @@map("capability_scope_targets")
+}
+
+model RoleScopeStrategy {
+  id                  String            @id @default(cuid())
+  tenantId            String?           @map("tenant_id")
+  roleId              String            @map("role_id")
+  capabilityId        String            @map("capability_id")
+  strategyMode        ScopeStrategyMode @map("strategy_mode")
+  dimensionEntityCode String?           @map("dimension_entity_code")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  createdBy           String            @map("created_by")
+  updatedAt           DateTime?         @updatedAt @map("updated_at")
+  updatedBy           String?           @map("updated_by")
+
+  @@index([roleId, capabilityId])
+  @@index([tenantId, capabilityId])
+  @@map("role_scope_strategies")
+}
+
+model UserScopeAssignment {
+  id                  String    @id @default(cuid())
+  tenantId            String?   @map("tenant_id")
+  userId              String    @map("user_id")
+  capabilityId        String    @map("capability_id")
+  dimensionEntityCode String    @map("dimension_entity_code")
+  entityId            String    @map("entity_id")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  createdBy           String    @map("created_by")
+  updatedAt           DateTime? @updatedAt @map("updated_at")
+  updatedBy           String?   @map("updated_by")
+
+  @@index([userId, capabilityId, dimensionEntityCode])
+  @@index([tenantId, userId])
+  @@map("user_scope_assignments")
+}
+
+model SubjectDimensionRelation {
+  id                  String    @id @default(cuid())
+  tenantId            String?   @map("tenant_id")
+  subjectEntityCode   String    @map("subject_entity_code")
+  subjectId           String    @map("subject_id")
+  dimensionEntityCode String    @map("dimension_entity_code")
+  entityId            String    @map("entity_id")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  createdBy           String    @map("created_by")
+  updatedAt           DateTime? @updatedAt @map("updated_at")
+  updatedBy           String?   @map("updated_by")
+
+  @@index([subjectEntityCode, subjectId, dimensionEntityCode])
+  @@index([tenantId, dimensionEntityCode])
+  @@map("subject_dimension_relations")
 }
 
 model CapabilityUiBinding {
@@ -334,19 +460,21 @@ model SysEndpoint {
 }
 
 model SysOrganization {
-  id          String    @id
-  code        String    @unique
-  name        String
-  description String?
-  pid         String    @default("0")
-  status      Status
-  createdAt   DateTime  @default(now()) @map("created_at")
-  createdBy   String    @map("created_by")
-  updatedAt   DateTime? @updatedAt @map("updated_at")
-  updatedBy   String?   @map("updated_by")
+    id          String    @id
+    code        String    @unique
+    name        String
+    description String?
+    tenantId    String?   @map("tenant_id")
+    pid         String    @default("0")
+    status      Status
+    createdAt   DateTime  @default(now()) @map("created_at")
+    createdBy   String    @map("created_by")
+    updatedAt   DateTime? @updatedAt @map("updated_at")
+    updatedBy   String?   @map("updated_by")
 
-  @@map("sys_organization")
-}
+    @@index([tenantId, status])
+    @@map("sys_organization")
+  }
 
 model SysLoginLog {
   id        String   @id @default(cuid())

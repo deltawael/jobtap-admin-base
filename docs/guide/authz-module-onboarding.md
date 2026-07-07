@@ -128,16 +128,89 @@
 4. 跨资源依赖说明
 5. 验收用例
 
-## 7. 示例一：角色管理模块
+## 7. 数据范围接入规则
 
-### 7.1 capability 清单
+### 7.1 不再扩展固定 scope 枚举
+
+当前底座已经取消继续扩展固定 `scopeType` 枚举的做法。
+
+模块如果需要数据范围，必须改为声明：
+
+- 范围维度实体
+- 用户侧解析链路
+- 资源侧解析链路
+- 能力支持哪些范围维度
+
+不得再新增：
+
+- `region`
+- `department`
+- `custom`
+
+这类新的固定范围类型。
+
+### 7.2 模块必须回答的四个问题
+
+为某个能力接入数据范围前，必须先明确：
+
+1. 哪个实体可以作为范围维度
+2. 用户如何解析到该维度
+3. 业务资源如何解析到该维度
+4. 角色配置的是策略，还是用户档案维护的是实体 ID
+
+当前底座对应的元数据模型是：
+
+- `ScopeDimensionEntity`
+- `SubjectDimensionResolver`
+- `ResourceDimensionResolver`
+- `CapabilityScopeTarget`
+
+### 7.3 角色与用户档案的职责拆分
+
+角色页只配置策略，不配置具体实体 ID。
+
+当前允许的角色策略只有：
+
+- `all`
+- `self`
+- `relation`
+- `assignment`
+
+具体实体 ID 统一放到：
+
+- 用户授权档案中的 `scopeAssignments`
+- 或委派中的 `dimensionEntityCode + entityId`
+
+### 7.4 `authz/can` 上下文要求
+
+如果模块能力启用了 relation / assignment 范围判定，调用 `authz/can` 时必须至少满足以下其一：
+
+- 直接传 `resolvedDimensionIds`
+- 传 `resourceEntityCode`，并确保已有资源解析器
+
+否则统一授权服务无法解析资源所属维度，范围判定不会成立。
+
+### 7.5 `deny` 不再作为接入选项
+
+当前底座统一移除了 `deny` 配置入口。
+
+模块接入时不得再设计：
+
+- 角色 deny 范围规则
+- 用户 deny 范围覆盖
+
+当前模型只保留 allow 语义，并通过策略命中与否决定是否放行。
+
+## 8. 示例一：角色管理模块
+
+### 8.1 capability 清单
 
 - `tenant.role.read`
 - `tenant.role.manage`
 - `tenant.role.scope.manage`
 - `tenant.role.reference.read`
 
-### 7.2 资源映射
+### 8.2 资源映射
 
 | 资源 | capability |
 | --- | --- |
@@ -147,24 +220,26 @@
 | 编辑角色 | `tenant.role.manage` |
 | 删除角色 | `tenant.role.manage` |
 | 配置角色 capability | `tenant.role.manage` |
-| 配置角色 scope | `tenant.role.scope.manage` |
+| 配置角色范围策略 | `tenant.role.scope.manage` |
 | 角色下拉接口 | `tenant.role.reference.read` 或 `tenant.role.read` / `tenant.role.manage` |
 
-## 8. 示例二：用户管理模块
+## 9. 示例二：用户管理模块
 
-### 8.1 capability 清单
+### 9.1 capability 清单
 
 - `tenant.user.read`
 - `tenant.user.manage`
 - `tenant.user.sensitive_view`
 
-### 8.2 依赖 capability
+### 9.2 依赖 capability
 
 - `tenant.role.reference.read`
 - `tenant.staff.reference.read`
 - `tenant.org.reference.read`（如使用组织树）
+- `tenant.user.auth_profile.read`
+- `tenant.user.auth_profile.manage`（如维护用户授权档案）
 
-### 8.3 资源映射
+### 9.3 资源映射
 
 | 资源 | capability |
 | --- | --- |
@@ -173,11 +248,13 @@
 | 新建用户 | `tenant.user.manage` |
 | 编辑用户 | `tenant.user.manage` |
 | 删除用户 | `tenant.user.manage` |
+| 编辑用户授权档案 | `tenant.user.auth_profile.manage` |
 | 角色下拉接口 | `tenant.role.reference.read` |
 | 员工下拉接口 | `tenant.staff.reference.read` |
+| 组织实体引用接口 | `tenant.org.reference.read` |
 | 敏感字段区块 | `tenant.user.sensitive_view` |
 
-## 9. 新模块接入检查表
+## 10. 新模块接入检查表
 
 上线前逐项确认：
 
@@ -187,8 +264,10 @@
 - 是否声明接口是单能力、`ANY_OF` 还是 `ALL_OF`。
 - 是否为默认模板配置了合理能力集合。
 - 是否补充了租户隔离与授权验收用例。
+- 如涉及数据范围，是否声明了维度实体、解析链路和能力范围目标。
+- 如涉及 `assignment` 策略，是否把实体 ID 录入放在用户授权档案而不是角色页。
 
-## 10. 基线示例账号与角色权限体现
+## 11. 基线示例账号与角色权限体现
 
 初始化仅保留：
 
@@ -202,7 +281,8 @@
 - 租户隔离是否正确
 - 管理菜单是否按角色能力正确展示
 
-## 11. 相关文档
+## 12. 相关文档
 
 - [环境初始化与基线](./environment-bootstrap.md)
 - [底座目标态说明](./base-project-guide.md)
+- [实体声明驱动的数据授权说明](./data-scope-authorization.md)

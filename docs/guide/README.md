@@ -13,7 +13,8 @@
 2. [环境初始化与基线](./environment-bootstrap.md)
 3. [底座目标态说明](./base-project-guide.md)
 4. [统一授权接入规范](./authz-module-onboarding.md)
-5. [品牌定制说明](./customer-branding.md)
+5. [实体声明驱动的数据授权说明](./data-scope-authorization.md)
+6. [品牌定制说明](./customer-branding.md)
 
 ## 按场景查阅
 
@@ -27,6 +28,8 @@
   - [环境初始化与基线](./environment-bootstrap.md)
 - 为模块设计 capability、梳理按钮级覆盖和跨资源依赖：
   - [统一授权接入规范](./authz-module-onboarding.md)
+- 理解当前数据授权如何从固定 scope 枚举切到实体维度声明，或为模块补充 relation / assignment 范围接入：
+  - [实体声明驱动的数据授权说明](./data-scope-authorization.md)
 - 替换品牌名、标题、图标和登录页展示内容：
   - [品牌定制说明](./customer-branding.md)
 

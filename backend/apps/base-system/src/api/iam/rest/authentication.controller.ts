@@ -92,12 +92,11 @@ export class AuthenticationController {
     const roles = roleIds.length ? await this.prisma.sysRole.findMany({ where: { id: { in: roleIds } } }) : [];
     const templateIds = roles.map(item => item.templateId).filter(Boolean) as string[];
     const now = new Date();
-    const [roleCapabilities, templateCapabilities, overrides, delegations] = await Promise.all([
+    const [roleCapabilities, templateCapabilities, delegations] = await Promise.all([
       roleIds.length ? this.prisma.roleCapability.findMany({ where: { roleId: { in: roleIds } } }) : Promise.resolve([]),
       templateIds.length
         ? this.prisma.roleTemplateCapability.findMany({ where: { templateId: { in: templateIds } } })
         : Promise.resolve([]),
-      this.prisma.userScopeOverride.findMany({ where: { userId: user.userId } }),
       this.prisma.delegation.findMany({
         where: {
           toUserId: user.userId,
@@ -112,7 +111,6 @@ export class AuthenticationController {
       ...new Set([
         ...roleCapabilities.map(item => item.capabilityId),
         ...templateCapabilities.map(item => item.capabilityId),
-        ...overrides.map(item => item.capabilityId),
         ...delegations.map(item => item.capabilityId)
       ])
     ];

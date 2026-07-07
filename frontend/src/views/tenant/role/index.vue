@@ -1,5 +1,5 @@
 <script setup lang="tsx">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { NButton, NPopconfirm, NTag } from 'naive-ui';
 import { enableStatusRecord } from '@/constants/business';
 import { deleteRole, fetchGetRoleList } from '@/service/api';
@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/modules/auth';
 import { useTable, useTableOperate } from '@/hooks/common/table';
 import { $t } from '@/locales';
 import RoleOperateDrawer from './modules/role-operate-drawer.vue';
+import RoleScopeStrategyDrawer from './modules/role-scope-strategy-drawer.vue';
 import RoleSearch from './modules/role-search.vue';
 
 defineOptions({
@@ -17,6 +18,8 @@ defineOptions({
 const appStore = useAppStore();
 const authStore = useAuthStore();
 const isSystemAdmin = computed(() => authStore.userInfo.actorType === 'system_admin');
+const scopeDrawerVisible = ref(false);
+const scopeEditingRole = ref<Api.SystemManage.Role | null>(null);
 const roleStatusTagMap = {
   ENABLED: 'success',
   DISABLED: 'warning'
@@ -56,11 +59,11 @@ const {
         render: (row: Api.SystemManage.Role) => <NTag type="info">{row.capabilityCount || 0}</NTag>
       },
       {
-        key: 'scopePolicyCount',
+        key: 'scopeStrategyCount',
         title: '数据范围数',
         align: 'center',
         width: 100,
-        render: (row: Api.SystemManage.Role) => <NTag type="warning">{row.scopePolicyCount || 0}</NTag>
+        render: (row: Api.SystemManage.Role) => <NTag type="warning">{row.scopeStrategyCount || 0}</NTag>
       },
       { key: 'description', title: $t('page.manage.role.roleDesc'), minWidth: 180 },
       {
@@ -77,11 +80,14 @@ const {
         key: 'operate',
         title: $t('common.operate'),
         align: 'center',
-        minWidth: 140,
+        minWidth: 220,
         render: (row: Api.SystemManage.Role) => (
           <div class="flex-center gap-8px">
             <NButton type="primary" ghost size="small" onClick={() => edit(row.id)}>
               {$t('common.edit')}
+            </NButton>
+            <NButton type="warning" ghost size="small" onClick={() => openScopeStrategy(row)}>
+              范围策略
             </NButton>
             <NPopconfirm onPositiveClick={() => handleDelete(row.id)}>
               {{
@@ -126,6 +132,11 @@ async function handleDelete(id: string) {
 function edit(id: string) {
   handleEdit(id);
 }
+
+function openScopeStrategy(row: Api.SystemManage.Role) {
+  scopeEditingRole.value = row;
+  scopeDrawerVisible.value = true;
+}
 </script>
 
 <template>
@@ -159,6 +170,11 @@ function edit(id: string) {
         v-model:visible="drawerVisible"
         :operate-type="operateType"
         :row-data="editingData"
+        @submitted="getDataByPage"
+      />
+      <RoleScopeStrategyDrawer
+        v-model:visible="scopeDrawerVisible"
+        :row-data="scopeEditingRole"
         @submitted="getDataByPage"
       />
     </NCard>

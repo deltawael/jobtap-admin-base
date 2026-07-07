@@ -11,7 +11,7 @@ interface Props {
   module?: UnionKey.LoginModule;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const appStore = useAppStore();
 const themeStore = useThemeStore();
@@ -27,6 +27,8 @@ const bgColor = computed(() => {
 
   return mixColor(COLOR_WHITE, themeStore.themeColor, ratio);
 });
+
+const currentModule = computed(() => props.module ?? 'pwd-login');
 </script>
 
 <template>
@@ -57,7 +59,7 @@ const bgColor = computed(() => {
           <h3 class="text-18px text-primary font-medium">{{ $t('page.login.pwdLogin.title') }}</h3>
           <div class="pt-24px">
             <Transition :name="themeStore.page.animateMode" mode="out-in" appear>
-              <PwdLogin />
+              <PwdLogin :key="currentModule" />
             </Transition>
           </div>
         </main>

@@ -44,8 +44,7 @@ function createDefaultModel(): RoleModel {
     status: null,
     tenantId: null,
     templateId: null,
-    capabilityIds: [],
-    scopePolicies: []
+    capabilityIds: []
   };
 }
 
@@ -94,21 +93,10 @@ const capabilityTree = computed<CapabilityTreeNode[]>(() => {
   return rawCapabilityTree.value.map(node => decorateCapabilityTreeNode(node, lockedIds));
 });
 
-const capabilityOptions = computed<CommonType.Option<string>[]>(() =>
-  collectCapabilityLeafNodes(rawCapabilityTree.value).map(item => ({
-    label: `${item.module === 'platform' ? '平台侧' : '租户侧'} / ${item.label} (${item.code})`,
-    value: item.value
-  }))
-);
-
 const tenantOptions = computed<CommonType.Option<string>[]>(() => [
   { label: '平台', value: PLATFORM_TENANT_OPTION_VALUE },
   ...tenants.value.map(item => ({ label: item.name, value: item.id }))
 ]);
-
-function createScopePolicy(): Api.SystemManage.ScopePolicy {
-  return { capabilityId: '', scopeType: 'all', scopeValue: null, effect: 'allow', description: null };
-}
 
 function normalizeTenantSelectValue(value: TenantSelectValue) {
   if (value === PLATFORM_TENANT_OPTION_VALUE || value === null) return null;
@@ -165,8 +153,7 @@ function handleInitModel() {
       status: props.rowData.status,
       tenantId: props.rowData.tenantId,
       templateId: props.rowData.templateId,
-      capabilityIds,
-      scopePolicies: props.rowData.scopePolicies || []
+      capabilityIds
     });
 
     tenantSelectValue.value = props.rowData.tenantId ?? PLATFORM_TENANT_OPTION_VALUE;
@@ -216,14 +203,6 @@ function handleTemplateChange(value: string | null) {
 
 function handleCapabilityTreeCheck(keys: Array<string | number>) {
   syncExtraCapabilitiesFromSelectedKeys((keys || []).map(item => String(item)));
-}
-
-function handleAddScopePolicy() {
-  model.scopePolicies = [...(model.scopePolicies || []), createScopePolicy()];
-}
-
-function handleRemoveScopePolicy(index: number) {
-  model.scopePolicies = (model.scopePolicies || []).filter((_, idx) => idx !== index);
 }
 
 async function handleSubmit() {
@@ -331,47 +310,6 @@ watch(visible, async value => {
               />
             </div>
           </NFormItem>
-          <NFormItem label="数据范围配置">
-            <div class="w-full flex-col gap-12px">
-              <NButton type="primary" dashed @click="handleAddScopePolicy">新增数据范围规则</NButton>
-              <div
-                v-for="(item, index) in model.scopePolicies || []"
-                :key="index"
-                class="border border-[#e5e7eb] rounded-8px p-12px"
-              >
-                <NSpace vertical>
-                  <NSelect
-                    v-model:value="item.capabilityId"
-                    filterable
-                    :options="capabilityOptions"
-                    placeholder="选择能力"
-                  />
-                  <NSelect
-                    v-model:value="item.scopeType"
-                    :options="[
-                      { label: '全部', value: 'all' },
-                      { label: '本人', value: 'self' },
-                      { label: '区域', value: 'region' },
-                      { label: '部门', value: 'department' },
-                      { label: '自定义', value: 'custom' }
-                    ]"
-                    placeholder="选择数据范围类型"
-                  />
-                  <NInput v-model:value="item.scopeValue" placeholder="范围值，可为空" />
-                  <NSelect
-                    v-model:value="item.effect"
-                    :options="[
-                      { label: '允许', value: 'allow' },
-                      { label: '拒绝', value: 'deny' }
-                    ]"
-                    placeholder="选择效果"
-                  />
-                  <NInput v-model:value="item.description" placeholder="规则说明" />
-                  <NButton type="error" text @click="handleRemoveScopePolicy(index)">删除规则</NButton>
-                </NSpace>
-              </div>
-            </div>
-          </NFormItem>
           <NFormItem :label="$t('page.manage.role.roleStatus')" path="status">
             <NRadioGroup v-model:value="model.status">
               <NRadio
@@ -396,5 +334,3 @@ watch(visible, async value => {
     </NDrawerContent>
   </NDrawer>
 </template>
-
-<style scoped></style>

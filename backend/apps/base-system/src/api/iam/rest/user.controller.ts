@@ -245,7 +245,9 @@ export class UserController {
     await this.prisma.$transaction([
       this.prisma.sysUserRole.deleteMany({ where: { userId: id } }),
       this.prisma.userScopeOverride.deleteMany({ where: { userId: id } }),
+      this.prisma.userScopeAssignment.deleteMany({ where: { userId: id } }),
       this.prisma.userStaffBinding.deleteMany({ where: { userId: id } }),
+      this.prisma.subjectDimensionRelation.deleteMany({ where: { subjectId: id, subjectEntityCode: 'user' } }),
       this.prisma.delegation.deleteMany({ where: { OR: [{ fromUserId: id }, { toUserId: id }] } }),
       this.prisma.sysUser.delete({ where: { id } }),
     ]);
@@ -363,12 +365,11 @@ export class UserController {
     const roles = roleIds.length ? await this.prisma.sysRole.findMany({ where: { id: { in: roleIds } } }) : [];
     const templateIds = [...new Set(roles.map(item => item.templateId).filter(Boolean))] as string[];
     const now = new Date();
-    const [roleCapabilities, templateCapabilities, overrides, delegations] = await Promise.all([
+    const [roleCapabilities, templateCapabilities, delegations] = await Promise.all([
       roleIds.length ? this.prisma.roleCapability.findMany({ where: { roleId: { in: roleIds } } }) : Promise.resolve([]),
       templateIds.length
         ? this.prisma.roleTemplateCapability.findMany({ where: { templateId: { in: templateIds } } })
         : Promise.resolve([]),
-      this.prisma.userScopeOverride.findMany({ where: { userId } }),
       this.prisma.delegation.findMany({
         where: {
           toUserId: userId,
@@ -383,7 +384,6 @@ export class UserController {
       ...new Set([
         ...roleCapabilities.map(item => item.capabilityId),
         ...templateCapabilities.map(item => item.capabilityId),
-        ...overrides.map(item => item.capabilityId),
         ...delegations.map(item => item.capabilityId),
       ]),
     ];

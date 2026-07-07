@@ -35,8 +35,10 @@
 - 用户
 - 租户角色
 - 用户授权档案
-- `scope override`
+- 角色范围策略
+- 用户显式范围配置
 - `delegation`
+- 主体维度关系
 - 租户审计
 - 各类业务数据
 
@@ -63,7 +65,7 @@
 
 - `资源目录` 负责维护菜单、按钮、页面视图、接口元数据。
 - `资源目录` 不是主授权模型，只是 capability 的投影目录。
-- 角色页不再展示“菜单权限 / API 权限”，只展示角色基础信息、能力配置、scope 配置。
+- 角色页不再展示“菜单权限 / API 权限”，只展示角色基础信息、能力配置和独立的数据范围策略配置。
 
 ## 5. 当前已落地通用功能
 
@@ -130,7 +132,7 @@
 - `system_admin` 负责平台标准治理。
 - `tenant_admin` 负责租户内用户、角色、授权档案和租户审计。
 - `boss` 是否能看敏感数据，不由模板名决定，只由 `view capability` 决定。
-- `manager` 代表通用管理层模板，默认与 scope 联动。
+- `manager` 代表通用管理层模板，可与数据范围策略联动。
 - `readonly` 默认只有被授予模块的只读能力。
 
 ## 7. 能力目录、资源目录、授权档案
@@ -169,10 +171,16 @@
 用户授权档案聚合展示：
 
 - 角色继承能力
-- 直接 `scope override`
+- 解析得到的维度关系快照
+- 显式范围配置
 - `delegation`
 - 可见 `view capability`
 - 关联员工
+
+角色范围策略与具体实体 ID 已拆开：
+
+- 角色只保存 `all / self / relation / assignment` 等策略
+- 具体实体 ID 只在用户授权档案和委派里维护
 
 ## 8. 统一授权中心
 
@@ -181,6 +189,11 @@
 - `can(user, capability, resource, context)`
 - `allowedScope(user, capability, context)`
 - `visibleViews(user, resourceType, context)`
+
+其中 `can` 的范围判定上下文已支持：
+
+- `resourceEntityCode`
+- `resolvedDimensionIds`
 
 接口绑定基线支持：
 
@@ -198,7 +211,9 @@
 - 任意租户内业务表都必须带 `tenant_id`。
 - 任意租户内查询默认必须注入 `tenant_id`。
 - 新模块上线前必须完成 capability 清单、资源映射清单、模板映射清单。
+- 新增数据范围能力时，不得继续扩展固定 `scopeType` 枚举，应改为声明范围维度实体与解析链路。
 
 更细的授权接入规则见：
 
 - [统一授权接入规范](./authz-module-onboarding.md)
+- [实体声明驱动的数据授权说明](./data-scope-authorization.md)

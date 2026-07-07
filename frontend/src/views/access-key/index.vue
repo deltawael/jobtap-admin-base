@@ -108,7 +108,6 @@ const { drawerVisible, operateType, editingData, handleAdd, handleEdit, checkedR
   useTableOperate(data, getData);
 
 async function handleBatchDelete() {
-  console.log(checkedRowKeys.value);
   onBatchDeleted();
 }
 

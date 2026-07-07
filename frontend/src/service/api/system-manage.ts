@@ -79,10 +79,7 @@ export function updateCapability(req: CapabilityModel) {
 }
 
 export type RoleModel = Partial<Pick<Api.SystemManage.Role, 'id'>> &
-  Pick<
-    Api.SystemManage.Role,
-    'name' | 'code' | 'description' | 'status' | 'tenantId' | 'templateId' | 'capabilityIds' | 'scopePolicies'
-  >;
+  Pick<Api.SystemManage.Role, 'name' | 'code' | 'description' | 'status' | 'tenantId' | 'templateId' | 'capabilityIds'>;
 
 export function createRole(req: RoleModel) {
   return request({ url: '/roles', method: 'post', data: req });
@@ -96,14 +93,51 @@ export function deleteRole(id: string) {
   return request({ url: `/roles/${id}`, method: 'delete' });
 }
 
+export function fetchGetRoleScopeStrategies(roleId: string) {
+  return request<Api.SystemManage.RoleScopeStrategy[]>({
+    url: `/roles/${roleId}/scope-strategies`,
+    method: 'get'
+  });
+}
+
+export function updateRoleScopeStrategies(roleId: string, req: Api.SystemManage.RoleScopeStrategy[]) {
+  return request<Api.SystemManage.RoleScopeStrategy[]>({
+    url: `/roles/${roleId}/scope-strategies`,
+    method: 'put',
+    data: req
+  });
+}
+
+export function fetchGetScopeDimensionRecords(dimensionEntityCode: string) {
+  return request<Api.SystemManage.ScopeDimensionRecord[]>({
+    url: `/scope-dimensions/${dimensionEntityCode}/records`,
+    method: 'get'
+  });
+}
+
 export function fetchGetUserAuthProfile(userId: string) {
   return request<Api.SystemManage.UserAuthProfile>({ url: `/users/${userId}/auth-profile`, method: 'get' });
 }
 
-export type UserAuthProfileModel = Pick<
-  Api.SystemManage.UserAuthProfile,
-  'roleIds' | 'scopeOverrides' | 'delegations' | 'linkedStaffId'
->;
+export type UserAuthProfileModel = Pick<Api.SystemManage.UserAuthProfile, 'roleIds' | 'linkedStaffId'> & {
+  relationBindings?: Api.SystemManage.RelationBinding[];
+  scopeAssignments: Array<Pick<Api.SystemManage.ScopeAssignment, 'capabilityId' | 'dimensionEntityCode' | 'entityIds'>>;
+  delegations: Array<
+    Partial<Pick<Api.SystemManage.Delegation, 'id'>> &
+      Pick<
+        Api.SystemManage.Delegation,
+        | 'tenantId'
+        | 'fromUserId'
+        | 'toUserId'
+        | 'capabilityId'
+        | 'dimensionEntityCode'
+        | 'entityId'
+        | 'status'
+        | 'startAt'
+        | 'endAt'
+      >
+  >;
+};
 
 export function updateUserAuthProfile(userId: string, req: UserAuthProfileModel) {
   return request<Api.SystemManage.UserAuthProfile>({ url: `/users/${userId}/auth-profile`, method: 'put', data: req });

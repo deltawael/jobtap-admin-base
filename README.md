@@ -108,6 +108,7 @@ pnpm dev
 ```bash
 cd frontend
 pnpm typecheck
+pnpm lint
 ```
 
 后端：
@@ -143,6 +144,7 @@ pnpm github:sync -- --config ../github-repo-config/staging.local.yaml
 - [环境初始化与基线](./docs/guide/environment-bootstrap.md)
 - [底座目标态说明](./docs/guide/base-project-guide.md)
 - [统一授权接入规范](./docs/guide/authz-module-onboarding.md)
+- [实体声明驱动的数据授权说明](./docs/guide/data-scope-authorization.md)
 - [品牌定制说明](./docs/guide/customer-branding.md)
 
 ## 说明
